@@ -2219,6 +2219,17 @@ namespace StockhamGenerator
 				}
 			}
 
+			//Include post-callback parameters if post-callback is set
+			if (fft_doPostCallback )
+			{
+				passStr += ", __global void* post_userdata";
+
+				if (fft_postCallback.localMemSize > 0)
+				{
+					passStr += ", __local void* post_localmem";
+				}
+			}
+
 			passStr += ")\n{\n";
 
 			// Register Declarations
@@ -4269,6 +4280,19 @@ namespace StockhamGenerator
 							str += ");\n";
 							
 							if (!halfLds) { str += exTab; str += "\tbarrier(CLK_LOCAL_MEM_FENCE);\n"; }
+							
+							if (params.fft_hasPostCallback)
+							{
+								str += ", post_userdata";
+
+								if (params.fft_postCallback.localMemSize > 0)
+								{
+									//TODO: if precallback localmem also requested, send the localmem with the right offset
+									str += ", localmem";
+								}
+							}
+
+							str += ");\n";
 						}
 						else // intermediate pass
 						{
