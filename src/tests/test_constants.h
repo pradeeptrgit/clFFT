@@ -23,14 +23,15 @@
 #include <string>
 #include <stdexcept>
 
-#define MULVAL float2 mulval(__global void* in, uint offset, __global void* userdata)\n \
+//Pre-callback function strings
+#define PRE_MULVAL float2 mulval(__global void* in, uint offset, __global void* userdata)\n \
 				{ \n \
 				float scalar = *((__global float*)userdata + offset); \n \
 				float2 ret = *((__global float2*)in + offset) * scalar; \n \
 				return ret; \n \
 				}
 
-#define MULVAL_UDT typedef struct USER_DATA  \
+#define PRE_MULVAL_UDT typedef struct USER_DATA  \
 					   {  \
 						float scalar1;  \
 						float scalar2;  \
@@ -43,14 +44,14 @@
 					return ret; \n \
 					}
 
-#define MULVAL_DP double2 mulval(__global void* in, uint offset, __global void* userdata)\n \
+#define PRE_MULVAL_DP double2 mulval(__global void* in, uint offset, __global void* userdata)\n \
 				{ \n \
 				double scalar = *((__global double*)userdata + offset); \n \
 				double2 ret = *((__global double2*)in + offset) * scalar; \n \
 				return ret; \n \
 				}
 
-#define MULVAL_PLANAR float2 mulval(__global void* inRe, __global void* inIm, uint offset, __global void* userdata)\n \
+#define PRE_MULVAL_PLANAR float2 mulval(__global void* inRe, __global void* inIm, uint offset, __global void* userdata)\n \
 				{ \n \
 				float scalar = *((__global float*)userdata + offset); \n \
 				float2 ret; \n \
@@ -59,7 +60,7 @@
 				return ret; \n \
 				}
 
-#define MULVAL_PLANAR_DP double2 mulval(__global void* inRe, __global void* inIm, uint offset, __global void* userdata)\n \
+#define PRE_MULVAL_PLANAR_DP double2 mulval(__global void* inRe, __global void* inIm, uint offset, __global void* userdata)\n \
 				{ \n \
 				double scalar = *((__global double*)userdata + offset); \n \
 				double2 ret; \n \
@@ -68,14 +69,14 @@
 				return ret; \n \
 				}
 
-#define MULVAL_REAL float mulval(__global void* in, uint offset, __global void* userdata)\n \
+#define PRE_MULVAL_REAL float mulval(__global void* in, uint offset, __global void* userdata)\n \
 				{ \n \
 				float scalar = *((__global float*)userdata + offset); \n \
 				float ret = *((__global float*)in + offset) * scalar; \n \
 				return ret; \n \
 				}
 
-#define MULVAL_REAL_DP double mulval(__global void* in, uint offset, __global void* userdata)\n \
+#define PRE_MULVAL_REAL_DP double mulval(__global void* in, uint offset, __global void* userdata)\n \
 				{ \n \
 				double scalar = *((__global double*)userdata + offset); \n \
 				double ret = *((__global double*)in + offset) * scalar; \n \
@@ -83,7 +84,7 @@
 				}
 
 //Precallback test for LDS - works when 1 WI works on one input element
-#define MULVAL_LDS float2 mulval(__global void* in, uint offset, __global void* userdata, __local void* localmem)\n \
+#define PRE_MULVAL_LDS float2 mulval(__global void* in, uint offset, __global void* userdata, __local void* localmem)\n \
 				{ \n \
 				uint lid = get_local_id(0); \n \
 				__local float* lds = (__local float*)localmem + lid; \n \
@@ -94,6 +95,33 @@
 				float avg = (prev + *lds + next)/3.0;\n \
 				float2 ret = *((__global float2*)in + offset) * avg; \n \
 				return ret; \n \
+				}
+
+//Post-callback function strings
+#define POST_MULVAL void mulval(__global void *output, uint outoffset, __global void *userdata, float2 fftoutput )\n \
+				{ \n \
+				float scalar = *((__global float*)userdata + outoffset); \n \
+				*((__global float2*)output + outoffset) = fftoutput * scalar; \n \
+				}
+
+#define POST_MULVAL_DP void mulval(__global void *output, uint outoffset, __global void *userdata, double2 fftoutput )\n \
+				{ \n \
+				double scalar = *((__global double*)userdata + outoffset); \n \
+				*((__global double2*)output + outoffset) = fftoutput * scalar; \n \
+				}
+
+#define POST_MULVAL_PLANAR void mulval(__global void *outputRe, __global void *outputIm, size_t outoffset, __global void *userdata, float fftoutputRe, float fftoutputIm )\n \
+				{ \n \
+				float scalar = *((__global float*)userdata + outoffset); \n \
+				*((__global float*)outputRe + outoffset) = fftoutputRe * scalar; \n \
+				*((__global float*)outputIm + outoffset) = fftoutputIm * scalar; \n \
+				}
+
+#define POST_MULVAL_PLANAR_DP void mulval(__global void *outputRe, __global void *outputIm, size_t outoffset, __global void *userdata, double fftoutputRe, double fftoutputIm )\n \
+				{ \n \
+				double scalar = *((__global double*)userdata + outoffset); \n \
+				*((__global double*)outputRe + outoffset) = fftoutputRe * scalar; \n \
+				*((__global double*)outputIm + outoffset) = fftoutputIm * scalar; \n \
 				}
 
 typedef struct USER_DATA  
