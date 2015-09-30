@@ -204,6 +204,94 @@ void precallback_complex_to_complex( data_pattern pattern, direction::direction_
 	EXPECT_EQ( true, test_fft.result() == reference.result() );
 }
 
+/*****************************************************/
+/*****************************************************/
+// complex to complex transform with postcallback
+// dimension is inferred from lengths.size()
+// tightly packed is inferred from strides.empty()
+template< class T, class cl_T, class fftw_T >
+void postcallback_complex_to_complex( data_pattern pattern, direction::direction_t direction,
+	std::vector<size_t> lengths, size_t batch,
+	std::vector<size_t> input_strides, std::vector<size_t> output_strides,
+	size_t input_distance, size_t output_distance,
+	layout::buffer_layout_t in_layout, layout::buffer_layout_t out_layout,
+	placeness::placeness_t placeness, T scale = 1.0f, bool hasUserDatatype = false )
+{
+	clfft<T, cl_T> test_fft( static_cast<clfftDim>(lengths.size()), &lengths[0],
+		input_strides.empty() ? NULL : &input_strides[0],
+		output_strides.empty() ? NULL : &output_strides[0],
+		batch, input_distance, output_distance,
+		cl_layout(in_layout), cl_layout(out_layout),
+		cl_placeness(placeness) );
+
+	fftw<T, fftw_T> reference( lengths.size(), &lengths[0], batch, c2c );
+
+	//initialize input
+	if( pattern == sawtooth )
+	{
+		test_fft.set_input_to_sawtooth( 1.0f );
+		reference.set_data_to_sawtooth( 1.0f );
+	}
+	else if( pattern == value )
+	{
+		test_fft.set_input_to_value( 2.0f, 2.5f );
+		reference.set_all_data_to_value( 2.0f, 2.5f );
+	}
+	else if( pattern == impulse )
+	{
+		test_fft.set_input_to_impulse();
+		reference.set_data_to_impulse();
+	}
+	else if( pattern == erratic )
+	{
+		test_fft.set_input_to_random();
+		reference.set_data_to_random();
+	}
+	else
+	{
+		throw std::runtime_error( "invalid pattern type in complex_to_complex()" );
+	}
+
+	// if we're starting with unequal data, we're destined for failure
+	EXPECT_EQ( true, test_fft.input_buffer() == reference.input_buffer() );
+
+	//set postcallback values
+	if (hasUserDatatype)
+	{
+		//test_fft.set_input_precallback_userdatatype();
+	}
+	else
+	{
+		test_fft.set_input_postcallback();
+	}
+	
+	if( direction == direction::forward )
+	{
+		test_fft.set_forward_transform();
+		test_fft.forward_scale( scale );
+
+		reference.set_forward_transform();
+		reference.forward_scale( scale );
+	}
+	else if( direction == direction::backward )
+	{
+		test_fft.set_backward_transform();
+		test_fft.backward_scale( scale );
+
+		reference.set_backward_transform();
+		reference.backward_scale( scale );
+	}
+	else
+		throw std::runtime_error( "invalid direction in complex_to_complex()" );
+
+	reference.transform();
+	test_fft.transform();
+
+	reference.set_output_postcallback();
+
+	EXPECT_EQ( true, test_fft.result() == reference.result() );
+}
+
 template< class T, class cl_T, class fftw_T >
 void precallback_complex_to_complex_lds( data_pattern pattern, direction::direction_t direction,
 	std::vector<size_t> lengths, size_t batch,
