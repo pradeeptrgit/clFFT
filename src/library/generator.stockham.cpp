@@ -1431,7 +1431,24 @@ namespace StockhamGenerator
 								
 								if (fft_doPostCallback)
 								{
-									if (c == (cEnd - 1))
+									if(interleaved && (component == SR_COMP_BOTH))
+									{
+										if (c == (cEnd - 1))
+										{
+											passStr += "tempC.x = "; passStr += regIndexC0; passStr += ";\n\t";
+											passStr += "tempC.y = "; passStr += regIndex; passStr += ";\n\t";
+
+											passStr += fft_postCallback.funcname; passStr += "("; 
+											passStr += buffer; passStr += ", (";
+											passStr += bufOffset; passStr += "), post_userdata, tempC";
+											if (fft_postCallback.localMemSize > 0)
+											{
+												passStr += ", post_localmem";
+											}
+											passStr += ");";
+										}
+									}
+									else if (c == (cEnd - 1))
 									{
 										passStr += fft_postCallback.funcname; passStr += "("; 
 										passStr += bufferRe; passStr += ", "; passStr += bufferIm; passStr += ", (";
@@ -2110,28 +2127,30 @@ namespace StockhamGenerator
 				passStr += ", "; passStr += IterRegArgs();
 			}
 
-			//Include pre-callback parameters if pre-callback is set
-			if (fft_doPreCallback )
+			if (fft_doPreCallback || fft_doPostCallback)
 			{
-				if ((r2c && !rcSimple) || c2r)
+				//Include pre-callback parameters if pre-callback is set
+				if (fft_doPreCallback )
 				{
-					passStr += ", uint inOffset2";
+					if ((r2c && !rcSimple) || c2r)
+					{
+						passStr += ", uint inOffset2";
+					}
+
+					passStr += ", __global void* userdata";
 				}
 
-				passStr += ", __global void* userdata";
+				//Include post-callback parameters if post-callback is set
+				if (fft_doPostCallback )
+				{
+					passStr += ", __global void* post_userdata";
+				}
 
-				if (fft_preCallback.localMemSize > 0)
+				if (fft_doPreCallback && fft_preCallback.localMemSize > 0)
 				{
 					passStr += ", __local void* localmem";
 				}
-			}
-
-			//Include post-callback parameters if post-callback is set
-			if (fft_doPostCallback )
-			{
-				passStr += ", __global void* post_userdata";
-
-				if (fft_postCallback.localMemSize > 0)
+				if (fft_doPostCallback && fft_postCallback.localMemSize > 0)
 				{
 					passStr += ", __local void* post_localmem";
 				}
@@ -2596,6 +2615,10 @@ namespace StockhamGenerator
 			}
 			else
 			{
+				if (fft_doPostCallback && outInterleaved)
+				{
+					passStr += "\n\t"; passStr += regB2Type; passStr += " tempC;";
+				}
 				passStr += "\n\tif(rw)\n\t{";
 				SweepRegs(SR_WRITE, fwd, outInterleaved, outStride, SR_COMP_BOTH, scale, false, bufferOutRe, bufferOutIm, "outOffset", 1, numB1, 0, passStr);
 				SweepRegs(SR_WRITE, fwd, outInterleaved, outStride, SR_COMP_BOTH, scale, false, bufferOutRe, bufferOutIm, "outOffset", 2, numB2, numB1, passStr);
@@ -2913,6 +2936,13 @@ namespace StockhamGenerator
 						break;
 				}
 				numPasses = pid;
+
+				//Pass post-callback information to Pass object if its the last pass. 
+				//This will be used in single kernel transforms
+				if (params.fft_hasPostCallback)
+				{
+					passes[numPasses - 1].SetPostcallback(params.fft_hasPostCallback, params.fft_postCallback);
+				}
 			}
 
 			assert(numPasses == passes.size());
@@ -3933,20 +3963,44 @@ namespace StockhamGenerator
 					
 					str += (params.fft_hasPreCallback) ? inOffset : "0";
 					
-					str += ", 0, ";
+					if (params.fft_hasPostCallback)
+					{
+						str += ", "; str += outOffset; str += ", ";
+					}
+					else
+					{
+						str += ", 0, ";
+					}
+
 					str += inBuf; str += outBuf;
 					str += IterRegs("&");
 
-					//if precalback set 
-					if (params.fft_hasPreCallback)
+					//If callback is set
+					if (hasCallback)
 					{
-						str += (r2c2r && !rcSimple) ?  ", iOffset2, userdata" : ", userdata";
+						//if pre-calback set 
+						if (params.fft_hasPreCallback)
+						{
+							str += (r2c2r && !rcSimple) ?  ", iOffset2, userdata" : ", userdata";
+						}
+
+						//if post-calback set 
+						if (params.fft_hasPostCallback)
+						{
+							str += ", post_userdata";
+						}
 
 						if (params.fft_preCallback.localMemSize > 0)
 						{
 							str += ", localmem";
 						}
+						if (params.fft_postCallback.localMemSize > 0)
+						{
+							//TODO: if precallback localmem also requested, send the localmem with the right offset
+							str += ", localmem";
+						}
 					}
+
 					str += ");\n";
 				}
 				else
