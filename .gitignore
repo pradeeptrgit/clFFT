@@ -17,3 +17,14 @@ build/
 
 # ignore tilde files
 *~
+src/client-callback/callback-client.cpp
+src/client-callback/callback_tests.bat
+src/client-callback/client.cpp
+src/client-callback/client.h
+src/client-callback/CMakeLists.pack
+src/client-callback/CMakeLists.txt
+src/client-callback/openCL.misc.cpp
+src/client-callback/openCL.misc.h
+src/client-callback/README.md
+*.bak
+src/client-callback/stdafx.cpp
