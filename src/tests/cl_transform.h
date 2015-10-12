@@ -773,11 +773,11 @@ public:
 		}
 		else
 		{
-			if (input.is_interleaved() )
+			if (output.is_interleaved() )
 			{
 				postcallbackstr = (precision == CLFFT_SINGLE) ? STRINGIFY(POST_MULVAL) : STRINGIFY(POST_MULVAL_DP);
 			}
-			else if (input.is_planar())
+			else if (output.is_planar())
 			{
 				postcallbackstr = (precision == CLFFT_SINGLE) ? STRINGIFY(POST_MULVAL_PLANAR) : STRINGIFY(POST_MULVAL_PLANAR_DP);
 			}
