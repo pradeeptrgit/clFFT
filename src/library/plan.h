@@ -525,10 +525,6 @@ public:
 
 	clfftStatus GetMax1DLength (size_t *longest ) const;
 
-	void ResetBinarySizes();
-	void ResetBinaries();
-
-	clfftStatus CompressPlan();
 	clfftStatus ConstructAndEnqueueConstantBuffers( cl_command_queue* commQueueFFT );
 
 	clfftStatus GetEnvelope (const FFTEnvelope **) const;
@@ -541,6 +537,16 @@ public:
 		ReleaseBuffers ();
 	}
 };
+
+static bool Is1DPossible(size_t length, size_t large1DThreshold)
+{
+	if (length > large1DThreshold)
+		return false;
+	if ( (length%7 == 0) && (length%5 == 0) && (length%3 == 0) )
+		return false;
+
+	return true;
+}
 
 #endif // AMD_CLFFT_plan_H
 

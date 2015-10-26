@@ -645,7 +645,7 @@ clfftStatus FFTAction::enqueue(clfftPlanHandle plHandle,
 
     if( fftRepo.pStatTimer )
     {
-        fftRepo.pStatTimer->AddSample( plHandle, this->plan, kern, numQueuesAndEvents, outEvents, gWorkSize );
+        fftRepo.pStatTimer->AddSample( plHandle, this->plan, kern, numQueuesAndEvents, outEvents, gWorkSize, lWorkSize );
     }
 
     return CLFFT_SUCCESS;
