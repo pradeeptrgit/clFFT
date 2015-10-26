@@ -1819,6 +1819,13 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 							}
 						}
 
+						//Set callback data if set on top level plan
+						if (fftPlan->hasPostCallback && integratedTranposes)
+						{
+							col2Plan->hasPostCallback = true;
+							col2Plan->postCallbackParam = fftPlan->postCallbackParam;
+							col2Plan->postcallUserData = fftPlan->postcallUserData;
+						}
 
 						OPENCL_V(clfftBakePlan(fftPlan->planY, numQueues, commQueueFFT, NULL, NULL ), _T( "BakePlan large1d second column plan failed" ) );
 
@@ -1855,6 +1862,14 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 								trans3Plan->inStride.push_back(trans3Plan->iDist);
 								trans3Plan->iDist *= fftPlan->length[index];
 								trans3Plan->outStride.push_back(fftPlan->outStride[index]);
+							}
+
+							//Set callback data if set on top level plan
+							if (fftPlan->hasPostCallback)
+							{
+								trans3Plan->hasPostCallback = true;
+								trans3Plan->postCallbackParam = fftPlan->postCallbackParam;
+								trans3Plan->postcallUserData = fftPlan->postcallUserData;
 							}
 
 							OPENCL_V(clfftBakePlan(fftPlan->planTZ, numQueues, commQueueFFT, NULL, NULL ),
