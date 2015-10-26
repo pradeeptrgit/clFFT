@@ -2878,7 +2878,7 @@ namespace StockhamGenerator
 
 					//Pass post-callback information to Pass object if its the last pass. 
 					//This will be used in single kernel transforms
-					if (params.fft_hasPostCallback && i == (nPasses - 1))
+					if (params.fft_hasPostCallback && i == (nPasses - 1) && !params.blockCompute)
 					{
 						passes[i].SetPostcallback(params.fft_hasPostCallback, params.fft_postCallback);
 					}
@@ -4090,7 +4090,7 @@ namespace StockhamGenerator
 
 							str += IterRegs("&"); 
 							
-							if (params.fft_hasPostCallback)
+							if (!blockCompute && params.fft_hasPostCallback)
 							{
 								str += ", post_userdata";
 
@@ -4168,9 +4168,27 @@ namespace StockhamGenerator
 
 						if( (blockComputeType == BCT_C2C) || (blockComputeType == BCT_R2C) )
 						{
-							str += "\t\t"; str += writeBuf; str += "[(me%"; str+= SztToStr(blockWidth); str += ") + ";
-							str += "(me/"; str+= SztToStr(blockWidth); str+= ")*"; str += SztToStr(params.fft_outStride[0]);
-							str += " + t*"; str += SztToStr(params.fft_outStride[0]*blockWGS/blockWidth); str += "] = R0"; str+= comp; str += ";\n";
+							if (blockComputeType == BCT_R2C && params.fft_hasPostCallback && outInterleaved)
+							{
+								writeBuf = (params.fft_placeness == CLFFT_INPLACE) ? "gb" : "gbOut";
+								
+								str += "\t\t"; str += params.fft_postCallback.funcname; str += "("; str += writeBuf; str += ", (";
+								str += outOffset; str += " + (me%"; str+= SztToStr(blockWidth); str += ") + ";
+								str += "(me/"; str+= SztToStr(blockWidth); str+= ")*"; str += SztToStr(params.fft_outStride[0]);
+								str += " + t*"; str += SztToStr(params.fft_outStride[0]*blockWGS/blockWidth); 
+								str += "), post_userdata, R0"; 
+								if (params.fft_postCallback.localMemSize > 0)
+								{
+									str += ", localmem";
+								}
+								str += ");\n";
+							}
+							else
+							{
+								str += "\t\t"; str += writeBuf; str += "[(me%"; str+= SztToStr(blockWidth); str += ") + ";
+								str += "(me/"; str+= SztToStr(blockWidth); str+= ")*"; str += SztToStr(params.fft_outStride[0]);
+								str += " + t*"; str += SztToStr(params.fft_outStride[0]*blockWGS/blockWidth); str += "] = R0"; str+= comp; str += ";\n";
+							}
 						}
 						else
 						{

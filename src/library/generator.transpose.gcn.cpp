@@ -317,6 +317,8 @@ static clfftStatus genTransposePrototype( const FFTGeneratedTransposeGCNAction::
 
 	if (params.fft_hasPreCallback)
 	{
+		assert(!params.fft_hasPostCallback);
+
 		if (params.fft_preCallback.localMemSize > 0)
 		{
 			clKernWrite( transKernel, 0 ) << ", __global void* userdata, __local void* localmem";
@@ -327,6 +329,20 @@ static clfftStatus genTransposePrototype( const FFTGeneratedTransposeGCNAction::
 		}
 	}
 
+	if (params.fft_hasPostCallback)
+	{
+		assert(!params.fft_hasPreCallback);
+
+		if (params.fft_postCallback.localMemSize > 0)
+		{
+			clKernWrite( transKernel, 0 ) << ", __global void* post_userdata, __local void* localmem";
+		}
+		else
+		{
+			clKernWrite( transKernel, 0 ) << ", __global void* post_userdata";
+		}
+	}
+	
     // Close the method signature
     clKernWrite( transKernel, 0 ) << " )\n{" << std::endl;
 
@@ -406,6 +422,13 @@ static clfftStatus genTransposeKernel( const FFTGeneratedTransposeGCNAction::Sig
 		clKernWrite( transKernel, 0 ) << std::endl;
 	}
 
+	//If post-callback is set for the plan
+	if (params.fft_hasPostCallback)
+	{
+		//Insert callback function code at the beginning 
+		clKernWrite( transKernel, 0 ) << params.fft_postCallback.funcstring << std::endl;
+		clKernWrite( transKernel, 0 ) << std::endl;
+	}
 
 	for(size_t bothDir=0; bothDir<2; bothDir++)
 	{
@@ -764,7 +787,11 @@ static clfftStatus genTransposeKernel( const FFTGeneratedTransposeGCNAction::Sig
 		switch( params.fft_outputLayout )
 		{
 		case CLFFT_COMPLEX_INTERLEAVED:
-			clKernWrite( transKernel, 3 ) << "global " << dtOutput << "* tileOut = " << pmComplexOut << " + oOffset;" << std::endl << std::endl;
+			//No need of tileOut declaration when postcallback is set as the global buffer is used directly
+			if (!params.fft_hasPostCallback)
+			{
+				clKernWrite( transKernel, 3 ) << "global " << dtOutput << "* tileOut = " << pmComplexOut << " + oOffset;" << std::endl << std::endl;
+			}
 			break;
 		case CLFFT_COMPLEX_PLANAR:
 			clKernWrite( transKernel, 3 ) << "global " << dtOutput << "* realTileOut = " << pmRealOut << " + oOffset;" << std::endl;
@@ -929,7 +956,19 @@ static clfftStatus genTransposeKernel( const FFTGeneratedTransposeGCNAction::Sig
 			switch( params.fft_outputLayout )
 			{
 			case CLFFT_COMPLEX_INTERLEAVED:
-				clKernWrite( transKernel, 9 ) << "tileOut[ gInd ] = tmp;" << std::endl;
+				if (params.fft_hasPostCallback)
+				{
+					clKernWrite( transKernel, 9 ) << params.fft_postCallback.funcname << "(" << pmComplexOut << ", (oOffset + gInd), post_userdata, tmp";
+					if (params.fft_postCallback.localMemSize > 0)
+					{
+						clKernWrite( transKernel, 0 ) << ", localmem";
+					}
+					clKernWrite( transKernel, 0 ) << ");" << std::endl;
+				}
+				else
+				{
+					clKernWrite( transKernel, 9 ) << "tileOut[ gInd ] = tmp;" << std::endl;
+				}
 				break;
 			case CLFFT_COMPLEX_PLANAR:
 				clKernWrite( transKernel, 9 ) << "realTileOut[ gInd ] = tmp.s0;" << std::endl;
@@ -1035,6 +1074,11 @@ clfftStatus FFTGeneratedTransposeGCNAction::initParams ()
 	{
 		this->signature.fft_hasPreCallback = true;
 		this->signature.fft_preCallback = this->plan->preCallback;
+	}
+	if (this->plan->hasPostCallback)
+	{
+		this->signature.fft_hasPostCallback = true;
+		this->signature.fft_postCallback = this->plan->postCallbackParam;
 	}
 
     return CLFFT_SUCCESS;
