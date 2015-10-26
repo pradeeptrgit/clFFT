@@ -4281,7 +4281,7 @@ namespace StockhamGenerator
 							
 							if (!halfLds) { str += exTab; str += "\tbarrier(CLK_LOCAL_MEM_FENCE);\n"; }
 							
-							if (params.fft_hasPostCallback)
+							if (!blockCompute && params.fft_hasPostCallback)
 							{
 								str += ", post_userdata";
 
@@ -4387,6 +4387,7 @@ namespace StockhamGenerator
 								//in the planar case, break from for loop since both real and imag components are handled
 								//together in post-callback
 								if (!outInterleaved) break;
+
 							}
 							else
 							{
