@@ -983,6 +983,7 @@ namespace StockhamGenerator
 						if(realSpecial && (nextPass == NULL) && (r == radix/2) && (i == 0))
 							passStr += "\n\t}\n\tif( rw && !me)\n\t{";
 
+						std::string regIndexC0;
 						for(size_t c=cStart; c<cEnd; c++) // component loop: 0 - real, 1 - imaginary
 						{
 							std::string tail;
@@ -1014,8 +1015,6 @@ namespace StockhamGenerator
 								}
 							}
 
-							passStr += "\n\t";
-
 							bufOffset.clear();
 							bufOffset += offset; bufOffset += " + ( "; 
 							if( (numButterfly * workGroupSize) > algLS )
@@ -1034,24 +1033,40 @@ namespace StockhamGenerator
 							bufOffset += SztToStr(r*algLS); bufOffset += " )*"; bufOffset += SztToStr(stride);
 
 							if(scale != 1.0f) { regIndex += " * "; regIndex += FloatToStr(scale); regIndex += FloatSuffix<PR>(); }
+							if (c == 0)	regIndexC0 = regIndex;
 
 							if (fft_doPostCallback)
 							{
-								passStr += fft_postCallback.funcname; passStr += "("; passStr += buffer; passStr += ", ";
-								passStr += bufOffset; passStr += ", post_userdata, ("; passStr += regIndex; passStr += ")";
-								if (fft_postCallback.localMemSize > 0)
+								if (interleaved || c == (cEnd - 1))
 								{
-									passStr += ", post_localmem";
+									passStr += "\n\t";
+									passStr += fft_postCallback.funcname; passStr += "(";
+								
+									if (interleaved)
+									{
+										passStr += buffer;
+									}
+									else
+									{
+										passStr += bufferRe; passStr += ", "; passStr += bufferIm;
+									}
+									passStr += ", ";
+									passStr += bufOffset; passStr += ", post_userdata, ("; passStr += regIndexC0; passStr += ")";
+									if (!interleaved) { passStr += ", ("; passStr += regIndex; passStr += ")"; }
+
+									if (fft_postCallback.localMemSize > 0)
+									{
+										passStr += ", post_localmem";
+									}
+									passStr += ");";
 								}
-								passStr += ")";
 							}
 							else
-							{
+							{	
+								passStr += "\n\t";
 								passStr += buffer; passStr += "["; passStr += bufOffset; passStr += "]";
-								passStr += tail; passStr += " = "; passStr += regIndex;
+								passStr += tail; passStr += " = "; passStr += regIndex; passStr += ";";
 							}
-
-							passStr += ";";
 
 							// Since we write real & imag at once, we break the loop
 							if(interleaved && (component == SR_COMP_BOTH))
