@@ -1052,6 +1052,7 @@ namespace StockhamGenerator
 									}
 									passStr += ", ";
 									passStr += bufOffset; passStr += ", post_userdata, ("; passStr += regIndexC0; passStr += ")";
+
 									if (!(interleaved || (c2r && bufferRe.compare(bufferIm) == 0))) { passStr += ", ("; passStr += regIndex; passStr += ")"; }
 
 									if (fft_postCallback.localMemSize > 0)
