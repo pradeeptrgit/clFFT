@@ -846,6 +846,13 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 						trans3Plan->outStride.push_back(fftPlan->outStride[index]);
 					}
 
+					//Set callback data if set on top level plan
+					if (fftPlan->hasPostCallback)
+					{
+						trans3Plan->hasPostCallback = true;
+						trans3Plan->postCallbackParam = fftPlan->postCallbackParam;
+						trans3Plan->postcallUserData = fftPlan->postcallUserData;
+					}
 
 					OPENCL_V(clfftBakePlan(fftPlan->planTZ, numQueues, commQueueFFT, NULL, NULL ),
 						_T( "BakePlan large1d trans3 plan failed" ) );
