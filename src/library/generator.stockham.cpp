@@ -4388,7 +4388,6 @@ namespace StockhamGenerator
 								//in the planar case, break from for loop since both real and imag components are handled
 								//together in post-callback
 								if (!outInterleaved) break;
-
 							}
 							else
 							{
