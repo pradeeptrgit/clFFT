@@ -4184,20 +4184,29 @@ namespace StockhamGenerator
 
 						if( (blockComputeType == BCT_C2C) || (blockComputeType == BCT_R2C) )
 						{
-							if (blockComputeType == BCT_R2C && params.fft_hasPostCallback && outInterleaved)
+							if (blockComputeType == BCT_R2C && params.fft_hasPostCallback)
 							{
-								writeBuf = (params.fft_placeness == CLFFT_INPLACE) ? "gb" : "gbOut";
+								if (outInterleaved)
+									writeBuf = (params.fft_placeness == CLFFT_INPLACE) ? "gb" : "gbOut";
+								else
+									writeBuf = (params.fft_placeness == CLFFT_INPLACE) ? "gbRe, gbIm" : "gbOutRe, gbOutIm";
 								
 								str += "\t\t"; str += params.fft_postCallback.funcname; str += "("; str += writeBuf; str += ", (";
 								str += outOffset; str += " + (me%"; str+= SztToStr(blockWidth); str += ") + ";
 								str += "(me/"; str+= SztToStr(blockWidth); str+= ")*"; str += SztToStr(params.fft_outStride[0]);
 								str += " + t*"; str += SztToStr(params.fft_outStride[0]*blockWGS/blockWidth); 
 								str += "), post_userdata, R0"; 
+								if (!outInterleaved) str += ".x, R0.y";
+
 								if (params.fft_postCallback.localMemSize > 0)
 								{
 									str += ", localmem";
 								}
 								str += ");\n";
+
+								//in the planar case, break from for loop since both real and imag components are handled
+								//together in post-callback
+								if (!outInterleaved) break;
 							}
 							else
 							{
