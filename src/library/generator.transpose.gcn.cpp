@@ -794,8 +794,12 @@ static clfftStatus genTransposeKernel( const FFTGeneratedTransposeGCNAction::Sig
 			}
 			break;
 		case CLFFT_COMPLEX_PLANAR:
-			clKernWrite( transKernel, 3 ) << "global " << dtOutput << "* realTileOut = " << pmRealOut << " + oOffset;" << std::endl;
-			clKernWrite( transKernel, 3 ) << "global " << dtOutput << "* imagTileOut = " << pmImagOut << " + oOffset;" << std::endl;
+			//No need of tileOut declaration when postcallback is set as the global buffer is used directly
+			if (!params.fft_hasPostCallback)
+			{
+				clKernWrite( transKernel, 3 ) << "global " << dtOutput << "* realTileOut = " << pmRealOut << " + oOffset;" << std::endl;
+				clKernWrite( transKernel, 3 ) << "global " << dtOutput << "* imagTileOut = " << pmImagOut << " + oOffset;" << std::endl;
+			}
 			break;
 		case CLFFT_HERMITIAN_INTERLEAVED:
 		case CLFFT_HERMITIAN_PLANAR:
@@ -971,8 +975,20 @@ static clfftStatus genTransposeKernel( const FFTGeneratedTransposeGCNAction::Sig
 				}
 				break;
 			case CLFFT_COMPLEX_PLANAR:
-				clKernWrite( transKernel, 9 ) << "realTileOut[ gInd ] = tmp.s0;" << std::endl;
-				clKernWrite( transKernel, 9 ) << "imagTileOut[ gInd ] = tmp.s1;" << std::endl;
+				if (params.fft_hasPostCallback)
+				{
+					clKernWrite( transKernel, 9 ) << params.fft_postCallback.funcname << "(" << pmRealOut << ", " << pmImagOut << ", (oOffset + gInd), post_userdata, tmp.s0, tmp.s1";
+					if (params.fft_postCallback.localMemSize > 0)
+					{
+						clKernWrite( transKernel, 0 ) << ", localmem";
+					}
+					clKernWrite( transKernel, 0 ) << ");" << std::endl;
+				}
+				else
+				{
+					clKernWrite( transKernel, 9 ) << "realTileOut[ gInd ] = tmp.s0;" << std::endl;
+					clKernWrite( transKernel, 9 ) << "imagTileOut[ gInd ] = tmp.s1;" << std::endl;
+				}
 				break;
 			case CLFFT_HERMITIAN_INTERLEAVED:
 			case CLFFT_HERMITIAN_PLANAR:
