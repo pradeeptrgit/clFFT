@@ -782,6 +782,296 @@ TEST_F(accuracy_test_postcallback_double, pow7_large_1D_forward_in_place_complex
 	catch( const std::exception& err ) { handle_exception(err);	}
 }
 
+template< class T, class cl_T, class fftw_T >
+void pow2_normal_2D_array_complex_to_complex_with_odd_batch_size()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( normal2 );
+	lengths.push_back( small2 );
+	size_t batch = 5;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t in_layout = layout::complex_planar;
+	layout::buffer_layout_t out_layout = layout::complex_planar;
+	placeness::placeness_t placeness = placeness::in_place;
+	direction::direction_t direction = direction::forward;
+
+	data_pattern pattern = sawtooth;
+	postcallback_complex_to_complex<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow2_normal_2D_array_complex_to_complex_with_odd_batch_size)
+{
+	try { pow2_normal_2D_array_complex_to_complex_with_odd_batch_size< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow2_normal_2D_array_complex_to_complex_with_odd_batch_size)
+{
+	try { pow2_normal_2D_array_complex_to_complex_with_odd_batch_size< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow2_normal_2D_forward_in_place_complex_interleaved_to_complex_interleaved()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( normal2 );
+	lengths.push_back( normal2 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t in_layout = layout::complex_interleaved;
+	layout::buffer_layout_t out_layout = layout::complex_interleaved;
+	placeness::placeness_t placeness = placeness::in_place;
+	direction::direction_t direction = direction::forward;
+
+	data_pattern pattern = sawtooth;
+	postcallback_complex_to_complex<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow2_normal_2D_forward_in_place_complex_interleaved_to_complex_interleaved)
+{
+	try { pow2_normal_2D_forward_in_place_complex_interleaved_to_complex_interleaved< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow2_normal_2D_forward_in_place_complex_interleaved_to_complex_interleaved)
+{
+	try { pow2_normal_2D_forward_in_place_complex_interleaved_to_complex_interleaved< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow2_small_2D_forward_out_of_place_complex_interleaved_to_complex_planar()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( small2 );
+	lengths.push_back( 8 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t in_layout = layout::complex_interleaved;
+	layout::buffer_layout_t out_layout = layout::complex_planar;
+	placeness::placeness_t placeness = placeness::out_of_place;
+	direction::direction_t direction = direction::forward;
+
+	data_pattern pattern = sawtooth;
+	postcallback_complex_to_complex<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow2_small_2D_forward_out_of_place_complex_interleaved_to_complex_planar)
+{
+	try { pow2_small_2D_forward_out_of_place_complex_interleaved_to_complex_planar< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow2_small_2D_forward_out_of_place_complex_interleaved_to_complex_planar)
+{
+	try { pow2_small_2D_forward_out_of_place_complex_interleaved_to_complex_planar< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow2_large_2D_backward_in_place_complex_planar_to_complex_planar()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( MaxLength2D<T>(2) );
+	lengths.push_back( normal2 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t in_layout = layout::complex_planar;
+	layout::buffer_layout_t out_layout = layout::complex_planar;
+	placeness::placeness_t placeness = placeness::in_place;
+	direction::direction_t direction = direction::backward;
+
+	data_pattern pattern = sawtooth;
+	postcallback_complex_to_complex<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow2_large_2D_backward_in_place_complex_planar_to_complex_planar)
+{
+	try { pow2_large_2D_backward_in_place_complex_planar_to_complex_planar< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow2_large_2D_backward_in_place_complex_planar_to_complex_planar)
+{
+	try { pow2_large_2D_backward_in_place_complex_planar_to_complex_planar< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow3_normal_2D_forward_in_place_complex_interleaved_to_complex_interleaved()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( normal3 );
+	lengths.push_back( normal3 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t in_layout = layout::complex_interleaved;
+	layout::buffer_layout_t out_layout = layout::complex_interleaved;
+	placeness::placeness_t placeness = placeness::in_place;
+	direction::direction_t direction = direction::forward;
+
+	data_pattern pattern = sawtooth;
+	postcallback_complex_to_complex<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow3_normal_2D_forward_in_place_complex_interleaved_to_complex_interleaved)
+{
+	try { pow3_normal_2D_forward_in_place_complex_interleaved_to_complex_interleaved< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow3_normal_2D_forward_in_place_complex_interleaved_to_complex_interleaved)
+{
+	try { pow3_normal_2D_forward_in_place_complex_interleaved_to_complex_interleaved< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow5_large_2D_backward_out_of_place_complex_planar_to_complex_planar()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( MaxLength2D<T>(5) );
+	lengths.push_back( normal5 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t in_layout = layout::complex_planar;
+	layout::buffer_layout_t out_layout = layout::complex_planar;
+	placeness::placeness_t placeness = placeness::out_of_place;
+	direction::direction_t direction = direction::backward;
+
+	data_pattern pattern = sawtooth;
+	postcallback_complex_to_complex<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow5_large_2D_backward_out_of_place_complex_planar_to_complex_planar)
+{
+	try { pow5_large_2D_backward_out_of_place_complex_planar_to_complex_planar< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow5_large_2D_backward_out_of_place_complex_planar_to_complex_planar)
+{
+	try { pow5_large_2D_backward_out_of_place_complex_planar_to_complex_planar< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow7_small_2D_backward_out_of_place_complex_interleaved_to_complex_planar()
+{
+    std::vector<size_t> lengths;
+    lengths.push_back(small7);
+    lengths.push_back(small7);
+    size_t batch = 1;
+    std::vector<size_t> input_strides;
+    std::vector<size_t> output_strides;
+    size_t input_distance = 0;
+    size_t output_distance = 0;
+    layout::buffer_layout_t in_layout = layout::complex_interleaved;
+    layout::buffer_layout_t out_layout = layout::complex_planar;
+    placeness::placeness_t placeness = placeness::out_of_place;
+    direction::direction_t direction = direction::backward;
+
+    data_pattern pattern = sawtooth;
+    postcallback_complex_to_complex<T, cl_T, fftw_T>(pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness);
+}
+
+TEST_F(accuracy_test_postcallback_single, pow7_small_2D_backward_out_of_place_complex_interleaved_to_complex_planar)
+{
+	try { pow7_small_2D_backward_out_of_place_complex_interleaved_to_complex_planar< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow7_small_2D_backward_out_of_place_complex_interleaved_to_complex_planar)
+{
+	try { pow7_small_2D_backward_out_of_place_complex_interleaved_to_complex_planar< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow2_normal_3D_forward_in_place_complex_interleaved_to_complex_interleaved()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( normal2 );
+	lengths.push_back( small2 );
+	lengths.push_back( small2 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t in_layout = layout::complex_interleaved;
+	layout::buffer_layout_t out_layout = layout::complex_interleaved;
+	placeness::placeness_t placeness = placeness::in_place;
+	direction::direction_t direction = direction::forward;
+
+	data_pattern pattern = sawtooth;
+	postcallback_complex_to_complex<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow2_normal_3D_forward_in_place_complex_interleaved_to_complex_interleaved)
+{
+	try { pow2_normal_3D_forward_in_place_complex_interleaved_to_complex_interleaved< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow2_normal_3D_forward_in_place_complex_interleaved_to_complex_interleaved)
+{
+	try { pow2_normal_3D_forward_in_place_complex_interleaved_to_complex_interleaved< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow3_normal_3D_forward_in_place_complex_planar_to_complex_planar()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( normal3 );
+	lengths.push_back( small3 );
+	lengths.push_back( small3 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t in_layout = layout::complex_planar;
+	layout::buffer_layout_t out_layout = layout::complex_planar;
+	placeness::placeness_t placeness = placeness::in_place;
+	direction::direction_t direction = direction::forward;
+
+	data_pattern pattern = sawtooth;
+	postcallback_complex_to_complex<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow3_normal_3D_forward_in_place_complex_planar_to_complex_planar)
+{
+	try { pow3_normal_3D_forward_in_place_complex_planar_to_complex_planar< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow3_normal_3D_forward_in_place_complex_planar_to_complex_planar)
+{
+	try { pow3_normal_3D_forward_in_place_complex_planar_to_complex_planar< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
 #pragma endregion
 
 } //namespace
