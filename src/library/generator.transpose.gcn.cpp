@@ -321,11 +321,11 @@ static clfftStatus genTransposePrototype( const FFTGeneratedTransposeGCNAction::
 
 		if (params.fft_preCallback.localMemSize > 0)
 		{
-			clKernWrite( transKernel, 0 ) << ", __global void* userdata, __local void* localmem";
+			clKernWrite( transKernel, 0 ) << ", __global void* pre_userdata, __local void* localmem";
 		}
 		else
 		{
-			clKernWrite( transKernel, 0 ) << ", __global void* userdata";
+			clKernWrite( transKernel, 0 ) << ", __global void* pre_userdata";
 		}
 	}
 
@@ -700,11 +700,11 @@ static clfftStatus genTransposeKernel( const FFTGeneratedTransposeGCNAction::Sig
 					{
 						if (params.fft_preCallback.localMemSize > 0)
 						{
-							clKernWrite( transKernel, 9 ) << "tmp = " << params.fft_preCallback.funcname << "(" << pmComplexIn << ", iOffset + gInd, userdata, localmem);" << std::endl;
+							clKernWrite( transKernel, 9 ) << "tmp = " << params.fft_preCallback.funcname << "(" << pmComplexIn << ", iOffset + gInd, pre_userdata, localmem);" << std::endl;
 						}
 						else
 						{
-							clKernWrite( transKernel, 9 ) << "tmp = " << params.fft_preCallback.funcname << "(" << pmComplexIn << ", iOffset + gInd, userdata);" << std::endl;
+							clKernWrite( transKernel, 9 ) << "tmp = " << params.fft_preCallback.funcname << "(" << pmComplexIn << ", iOffset + gInd, pre_userdata);" << std::endl;
 						}
 					}
 					else
@@ -719,11 +719,11 @@ static clfftStatus genTransposeKernel( const FFTGeneratedTransposeGCNAction::Sig
 					{
 						if (params.fft_preCallback.localMemSize > 0)
 						{
-							clKernWrite( transKernel, 9 ) << "retCallback = " << params.fft_preCallback.funcname << "(" << pmRealIn << ", " << pmImagIn << ", iOffset + gInd, userdata, localmem);" << std::endl;
+							clKernWrite( transKernel, 9 ) << "retCallback = " << params.fft_preCallback.funcname << "(" << pmRealIn << ", " << pmImagIn << ", iOffset + gInd, pre_userdata, localmem);" << std::endl;
 						}
 						else
 						{
-							clKernWrite( transKernel, 9 ) << "retCallback = " << params.fft_preCallback.funcname << "(" << pmRealIn << ", " << pmImagIn << ", iOffset + gInd, userdata);" << std::endl;
+							clKernWrite( transKernel, 9 ) << "retCallback = " << params.fft_preCallback.funcname << "(" << pmRealIn << ", " << pmImagIn << ", iOffset + gInd, pre_userdata);" << std::endl;
 						}
 						clKernWrite( transKernel, 9 ) << "tmp.s0 = retCallback.x;" << std::endl;
 						clKernWrite( transKernel, 9 ) << "tmp.s1 = retCallback.y;" << std::endl;
@@ -743,11 +743,11 @@ static clfftStatus genTransposeKernel( const FFTGeneratedTransposeGCNAction::Sig
 				{
 					if (params.fft_preCallback.localMemSize > 0)
 					{
-						clKernWrite( transKernel, 9 ) << "tmp = " << params.fft_preCallback.funcname << "(" << pmRealIn << ", iOffset + gInd, userdata, localmem);" << std::endl;
+						clKernWrite( transKernel, 9 ) << "tmp = " << params.fft_preCallback.funcname << "(" << pmRealIn << ", iOffset + gInd, pre_userdata, localmem);" << std::endl;
 					}
 					else
 					{
-						clKernWrite( transKernel, 9 ) << "tmp = " << params.fft_preCallback.funcname << "(" << pmRealIn << ", iOffset + gInd, userdata);" << std::endl;
+						clKernWrite( transKernel, 9 ) << "tmp = " << params.fft_preCallback.funcname << "(" << pmRealIn << ", iOffset + gInd, pre_userdata);" << std::endl;
 					}
 				}
 				else

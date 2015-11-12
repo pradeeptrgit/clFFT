@@ -491,6 +491,23 @@ public:
 		input.multiply_3pt_average(userdata);
 	}
 
+	void set_output_postcallback_special()
+	{
+		//postcallback user data
+		buffer<T> userdata( 	output.number_of_dimensions(),
+					output.lengths(),
+					output.strides(),
+					output.batch_size(),
+					output.distance(),
+					layout::real ,
+					CLFFT_INPLACE
+					);
+		
+		userdata.set_all_to_random_data(_lengths[0], 10);
+		
+		output.multiply_3pt_average(userdata);
+	}
+
 	/*****************************************************/
 	void clear_data_buffer()
 	{
