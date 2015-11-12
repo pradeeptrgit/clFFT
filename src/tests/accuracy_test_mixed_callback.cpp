@@ -27,10 +27,10 @@
 
 /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
-class accuracy_test_precallback_single : public ::testing::Test {
+class accuracy_test_callback_single : public ::testing::Test {
 protected:
-	accuracy_test_precallback_single(){}
-	virtual ~accuracy_test_precallback_single(){}
+	accuracy_test_callback_single(){}
+	virtual ~accuracy_test_callback_single(){}
 	virtual void SetUp(){}
 	virtual void TearDown(){
 	}
@@ -221,7 +221,7 @@ TEST_P( mixed_radix_postcallback, double_precision_complex_to_complex_auto_gener
 // *****************************************************
 // *****************************************************
 template< class T, class cl_T, class fftw_T >
-void pow2_normal_1D_forward_in_place_complex_to_complex_userdatatype()
+void precall_normal_1D_forward_in_place_complex_to_complex_userdatatype()
 {
 	std::vector<size_t> lengths;
 	lengths.push_back( normal2 );
@@ -239,15 +239,15 @@ void pow2_normal_1D_forward_in_place_complex_to_complex_userdatatype()
 	precallback_complex_to_complex<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness, 1.0f, true );
 }
 
-TEST_F(accuracy_test_precallback_single, pow2_normal_1D_forward_in_place_complex_to_complex_userdatatype)
+TEST_F(accuracy_test_callback_single, precall_normal_1D_forward_in_place_complex_to_complex_userdatatype)
 {
-	try { pow2_normal_1D_forward_in_place_complex_to_complex_userdatatype< float, cl_float, fftwf_complex >(); }
+	try { precall_normal_1D_forward_in_place_complex_to_complex_userdatatype< float, cl_float, fftwf_complex >(); }
 	catch( const std::exception& err ) { handle_exception(err);	}
 }
 
 //Precallback with LDS
 template< class T, class cl_T, class fftw_T >
-void lds_1D_forward_64_in_place_complex_interleaved_to_complex_interleaved()
+void precall_lds_1D_forward_64_in_place_complex_to_complex()
 {
 	std::vector<size_t> lengths;
 	lengths.push_back( 64 );
@@ -265,9 +265,35 @@ void lds_1D_forward_64_in_place_complex_interleaved_to_complex_interleaved()
 	precallback_complex_to_complex_lds<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness );
 }
 
-TEST_F(accuracy_test_precallback_single, lds_1D_forward_64_in_place_complex_interleaved_to_complex_interleaved)
+TEST_F(accuracy_test_callback_single, precall_lds_1D_forward_64_in_place_complex_to_complex)
 {
-	try { lds_1D_forward_64_in_place_complex_interleaved_to_complex_interleaved< float, cl_float, fftwf_complex >(); }
+	try { precall_lds_1D_forward_64_in_place_complex_to_complex< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+//Postcallback with LDS
+template< class T, class cl_T, class fftw_T >
+void postcall_lds_1D_forward_64_in_place_complex_to_complex()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( 64 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t in_layout = layout::complex_interleaved;
+	layout::buffer_layout_t out_layout = layout::complex_interleaved;
+	placeness::placeness_t placeness = placeness::in_place;
+	direction::direction_t direction = direction::forward;
+
+	data_pattern pattern = impulse;
+	postcallback_complex_to_complex_lds<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness );
+}
+
+TEST_F(accuracy_test_callback_single, postcall_lds_1D_forward_64_in_place_complex_to_complex)
+{
+	try { postcall_lds_1D_forward_64_in_place_complex_to_complex< float, cl_float, fftwf_complex >(); }
 	catch( const std::exception& err ) { handle_exception(err);	}
 }
 

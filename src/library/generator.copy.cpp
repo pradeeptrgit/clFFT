@@ -205,7 +205,7 @@ namespace CopyGenerator
 
 			if (params.fft_hasPreCallback && h2c)
 			{
-				str += ", __global void* userdata";
+				str += ", __global void* pre_userdata";
 				if (params.fft_preCallback.localMemSize > 0)
 				{
 					str += ", __local void* localmem";
@@ -400,11 +400,11 @@ namespace CopyGenerator
 					{
 						if(inIlvd)
 						{
-							str += "R = "; str += params.fft_preCallback.funcname; str += "( gbIn, (iOffset"; str += inF; str += "), userdata"; 
+							str += "R = "; str += params.fft_preCallback.funcname; str += "( gbIn, (iOffset"; str += inF; str += "), pre_userdata"; 
 						}
 						else
 						{
-							str += "R = "; str += params.fft_preCallback.funcname; str += "( gbInRe, gbInIm, (iOffset"; str += inF; str += "), userdata";
+							str += "R = "; str += params.fft_preCallback.funcname; str += "( gbInRe, gbInIm, (iOffset"; str += inF; str += "), pre_userdata";
 						}
 						if (params.fft_preCallback.localMemSize > 0)
 						{
