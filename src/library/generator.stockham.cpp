@@ -4284,6 +4284,8 @@ namespace StockhamGenerator
 							
 							if (!blockCompute && params.fft_hasPostCallback)
 							{
+								if (r2c && !rcSimple) { str += ", "; str += outOffset; str += "2"; }
+
 								str += ", post_userdata";
 
 								if (params.fft_postCallback.localMemSize > 0)

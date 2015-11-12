@@ -759,7 +759,7 @@ public:
 	}
 
 		/*****************************************************/
-	void set_input_postcallback(unsigned int localMemSize = 0) {
+	void set_output_postcallback(unsigned int localMemSize = 0) {
 		cl_int status = 0;
 		clfftPrecision precision;
 		clfftGetPlanPrecision( *plan_handle, &precision );
@@ -769,7 +769,7 @@ public:
 		if (localMemSize > 0)
 		{
 			//Test for LDS in postcallback function
-			//precallbackstr = STRINGIFY(PRE_MULVAL_LDS);
+			postcallbackstr = STRINGIFY(POST_MULVAL_LDS);
 		}
 		else
 		{
@@ -789,10 +789,10 @@ public:
 
 		//post-callback user data
 		buffer<T> userdata( 	static_cast<size_t>(dimension),
-					input.lengths(),
-					input.strides(),
-					input.batch_size(),
-					input.distance(),
+					output.lengths(),
+					output.strides(),
+					output.batch_size(),
+					output.distance(),
 					layout::real,
 					_placeness
 					);
@@ -806,7 +806,7 @@ public:
 		OPENCL_V_THROW( status, "Creating Buffer ( ::clCreateBuffer() )" );
 
 		//Register the post-callback
-		OPENCL_V_THROW (clfftSetPlanCallback(*plan_handle, "mulval", postcallbackstr, localMemSize, POSTCALLBACK, &userdataBuff, 1), "clFFTSetPlanCallback failed");
+		OPENCL_V_THROW (clfftSetPlanCallback(*plan_handle, "mulval_post", postcallbackstr, localMemSize, POSTCALLBACK, &userdataBuff, 1), "clFFTSetPlanCallback failed");
 	}
 
 	/*****************************************************/
