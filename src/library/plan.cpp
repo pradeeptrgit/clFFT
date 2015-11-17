@@ -1102,6 +1102,14 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 					trans3Plan->realSpecial	  = true;
 					trans3Plan->transOutHorizontal = true;
 
+					//Set callback data if set on top level plan
+					if (fftPlan->hasPostCallback)
+					{
+						trans3Plan->hasPostCallback = true;
+						trans3Plan->postCallbackParam = fftPlan->postCallbackParam;
+						trans3Plan->postcallUserData = fftPlan->postcallUserData;
+					}
+
 					OPENCL_V(clfftBakePlan(fftPlan->planTZ, numQueues, commQueueFFT, NULL, NULL ),
 						_T( "BakePlan large1d trans3 plan failed" ) );
 
@@ -1273,6 +1281,14 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 							copyPlan->inStride.push_back(copyPlan->inStride[index - 1] * fftPlan->length[index - 1]);
 							copyPlan->iDist *= fftPlan->length[index];
 							copyPlan->outStride.push_back(fftPlan->outStride[index]);
+						}
+
+						//Set callback data if set on top level plan
+						if (fftPlan->hasPostCallback)
+						{
+							copyPlan->hasPostCallback = true;
+							copyPlan->postCallbackParam = fftPlan->postCallbackParam;
+							copyPlan->postcallUserData = fftPlan->postcallUserData;
 						}
 
 						OPENCL_V(clfftBakePlan(fftPlan->planRCcopy, numQueues, commQueueFFT, NULL, NULL), _T("BakePlan large1d RC copy plan failed"));
