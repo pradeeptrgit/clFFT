@@ -2173,6 +2173,14 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 					transPlanY->postcallUserData = fftPlan->postcallUserData;
 				}
 
+				//Set callback data if set on top level plan
+				if (fftPlan->hasPostCallback)
+				{
+					transPlanY->hasPostCallback = true;
+					transPlanY->postCallbackParam = fftPlan->postCallbackParam;
+					transPlanY->postcallUserData = fftPlan->postcallUserData;
+				}
+
 				OPENCL_V(clfftBakePlan(fftPlan->planTY, numQueues, commQueueFFT, NULL, NULL ),
 					_T( "BakePlan for planTY failed" ) );
 
@@ -2440,6 +2448,14 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 
 					}
 
+					//Set callback data if set on top level plan
+					if (fftPlan->hasPostCallback)
+					{
+						trans2Plan->hasPostCallback = true;
+						trans2Plan->postCallbackParam = fftPlan->postCallbackParam;
+						trans2Plan->postcallUserData = fftPlan->postcallUserData;
+					}
+
 					OPENCL_V(clfftBakePlan(fftPlan->planTY, numQueues, commQueueFFT, NULL, NULL ),
 						_T( "BakePlan for planTY failed" ) );
 
@@ -2501,6 +2517,14 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 						colPlan->length.push_back(fftPlan->length[index]);
 						colPlan->outStride.push_back(fftPlan->outStride[index]);
 						colPlan->inStride.push_back(rowPlan->outStride[index]);
+					}
+
+					//Set callback data if set on top level plan
+					if (fftPlan->hasPostCallback)
+					{
+						colPlan->hasPostCallback = true;
+						colPlan->postCallbackParam = fftPlan->postCallbackParam;
+						colPlan->postcallUserData = fftPlan->postcallUserData;
 					}
 
 					OPENCL_V(clfftBakePlan(fftPlan->planY, numQueues, commQueueFFT, NULL, NULL ), _T( "BakePlan for planY failed" ) );
@@ -3313,6 +3337,14 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 						trans2Plan->outStride.push_back(fftPlan->outStride[index]);
 					}
 
+					//Set callback data if set on top level plan
+					if (fftPlan->hasPostCallback)
+					{
+						trans2Plan->hasPostCallback = true;
+						trans2Plan->postCallbackParam = fftPlan->postCallbackParam;
+						trans2Plan->postcallUserData = fftPlan->postcallUserData;
+					}
+
 					OPENCL_V(clfftBakePlan(fftPlan->planTY, numQueues, commQueueFFT, NULL, NULL ),
 						_T( "BakePlan for planTY failed" ) );
 
@@ -3379,6 +3411,14 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 						colPlan->length.push_back(fftPlan->length[index]);
 						colPlan->inStride.push_back(xyPlan->outStride[index]);
 						colPlan->outStride.push_back(fftPlan->outStride[index]);
+					}
+
+					//Set callback data if set on top level plan
+					if (fftPlan->hasPostCallback)
+					{
+						colPlan->hasPostCallback = true;
+						colPlan->postCallbackParam = fftPlan->postCallbackParam;
+						colPlan->postcallUserData = fftPlan->postcallUserData;
 					}
 
 					OPENCL_V(clfftBakePlan(fftPlan->planZ, numQueues, commQueueFFT, NULL, NULL ), _T( "BakePlan 3D->1D planZ failed" ) );
