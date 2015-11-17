@@ -1169,6 +1169,477 @@ TEST_F(accuracy_test_postcallback_double, pow2_normal_1D_in_place_real_to_hermit
 	catch( const std::exception& err ) { handle_exception(err);	}
 }
 
+template< class T, class cl_T, class fftw_T >
+void pow2_normal_1D_out_of_place_real_to_hermitian_planar()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( normal2 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_planar;
+	placeness::placeness_t placeness = placeness::out_of_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow2_normal_1D_out_of_place_real_to_hermitian_planar)
+{
+	try { pow2_normal_1D_out_of_place_real_to_hermitian_planar< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow2_normal_1D_out_of_place_real_to_hermitian_planar)
+{
+	try { pow2_normal_1D_out_of_place_real_to_hermitian_planar< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow2_small_1D_in_place_real_to_hermitian_interleaved()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( small2 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_interleaved;
+	placeness::placeness_t placeness = placeness::in_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow2_small_1D_in_place_real_to_hermitian_interleaved)
+{
+	try { pow2_small_1D_in_place_real_to_hermitian_interleaved< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow2_small_1D_in_place_real_to_hermitian_interleaved)
+{
+	try { pow2_small_1D_in_place_real_to_hermitian_interleaved< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow2_normal_1D_array_real_to_hermitian()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( normal2 );
+	size_t batch = 8;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_interleaved;
+	placeness::placeness_t placeness = placeness::in_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow2_normal_1D_array_real_to_hermitian)
+{
+	try { pow2_normal_1D_array_real_to_hermitian< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow2_normal_1D_array_real_to_hermitian)
+{
+	try { pow2_normal_1D_array_real_to_hermitian< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow2_very_small_1D_out_of_place_different_input_output_non_unit_stride_and_distance_real_to_complex()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( 4 );
+	size_t batch = 2;
+
+	std::vector<size_t> input_strides;
+	input_strides.push_back( 16 );
+
+	size_t input_distance = lengths[lengths.size()-1] * input_strides[input_strides.size()-1] + 128;
+
+	std::vector<size_t> output_strides;
+	output_strides.push_back( 2 );
+
+	size_t output_distance = lengths[lengths.size()-1] * output_strides[output_strides.size()-1] + 2;
+
+	layout::buffer_layout_t layout = layout::hermitian_interleaved;
+	placeness::placeness_t placeness = placeness::out_of_place;
+
+	data_pattern pattern = impulse;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow2_very_small_1D_out_of_place_different_input_output_non_unit_stride_and_distance_real_to_complex)
+{
+	try { pow2_very_small_1D_out_of_place_different_input_output_non_unit_stride_and_distance_real_to_complex< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow2_very_small_1D_out_of_place_different_input_output_non_unit_stride_and_distance_real_to_complex)
+{
+	try { pow2_very_small_1D_out_of_place_different_input_output_non_unit_stride_and_distance_real_to_complex< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow3_normal_1D_out_of_place_real_to_hermitian_interleaved()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( normal3 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_interleaved;
+	placeness::placeness_t placeness = placeness::out_of_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow3_normal_1D_out_of_place_real_to_hermitian_interleaved)
+{
+	try { pow3_normal_1D_out_of_place_real_to_hermitian_interleaved< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow3_normal_1D_out_of_place_real_to_hermitian_interleaved)
+{
+	try { pow3_normal_1D_out_of_place_real_to_hermitian_interleaved< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow5_normal_1D_array_real_to_hermitian_with_odd_batch_size()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( normal5 );
+	size_t batch = 5;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_interleaved;
+	placeness::placeness_t placeness = placeness::in_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow5_normal_1D_array_real_to_hermitian_with_odd_batch_size)
+{
+	try { pow5_normal_1D_array_real_to_hermitian_with_odd_batch_size< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow5_normal_1D_array_real_to_hermitian_with_odd_batch_size)
+{
+	try { pow5_normal_1D_array_real_to_hermitian_with_odd_batch_size< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow5_normal_1D_out_of_place_real_to_hermitian_planar()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( normal5 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_planar;
+	placeness::placeness_t placeness = placeness::out_of_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow5_normal_1D_out_of_place_real_to_hermitian_planar)
+{
+	try { pow5_normal_1D_out_of_place_real_to_hermitian_planar< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow5_normal_1D_out_of_place_real_to_hermitian_planar)
+{
+	try { pow5_normal_1D_out_of_place_real_to_hermitian_planar< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow7_small_1D_in_place_real_to_hermitian_interleaved()
+{
+    std::vector<size_t> lengths;
+    lengths.push_back(small7);
+    size_t batch = 1;
+    std::vector<size_t> input_strides;
+    std::vector<size_t> output_strides;
+    size_t input_distance = 0;
+    size_t output_distance = 0;
+    layout::buffer_layout_t layout = layout::hermitian_interleaved;
+    placeness::placeness_t placeness = placeness::in_place;
+
+    data_pattern pattern = sawtooth;
+    postcallback_real_to_complex<T, cl_T, fftw_T>(pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness);
+}
+
+TEST_F(accuracy_test_postcallback_single, pow7_small_1D_in_place_real_to_hermitian_interleaved)
+{
+	try { pow7_small_1D_in_place_real_to_hermitian_interleaved< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow7_small_1D_in_place_real_to_hermitian_interleaved)
+{
+	try { pow7_small_1D_in_place_real_to_hermitian_interleaved< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow2_large_1D_in_place_real_to_hermitian_interleaved()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( large2 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_interleaved;
+	placeness::placeness_t placeness = placeness::in_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow2_large_1D_in_place_real_to_hermitian_interleaved)
+{
+	try { pow2_large_1D_in_place_real_to_hermitian_interleaved< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow2_large_1D_in_place_real_to_hermitian_interleaved)
+{
+	try { pow2_large_1D_in_place_real_to_hermitian_interleaved< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow2_large_1D_4M_in_place_real_to_hermitian_interleaved()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( 4194304 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_interleaved;
+	placeness::placeness_t placeness = placeness::in_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow2_large_1D_4M_in_place_real_to_hermitian_interleaved)
+{
+	try { pow2_large_1D_4M_in_place_real_to_hermitian_interleaved< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow2_large_1D_4M_in_place_real_to_hermitian_interleaved)
+{
+	try { pow2_large_1D_4M_in_place_real_to_hermitian_interleaved< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow2_large_1D_4M_out_of_place_real_to_hermitian_planar()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( 4194304 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_planar;
+	placeness::placeness_t placeness = placeness::out_of_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow2_large_1D_4M_out_of_place_real_to_hermitian_planar)
+{
+	try { pow2_large_1D_4M_out_of_place_real_to_hermitian_planar< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow2_large_1D_4M_out_of_place_real_to_hermitian_planar)
+{
+	try { pow2_large_1D_4M_out_of_place_real_to_hermitian_planar< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow3_large_1D_out_of_place_real_to_hermitian_planar()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( large3 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_planar;
+	placeness::placeness_t placeness = placeness::out_of_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow3_large_1D_out_of_place_real_to_hermitian_planar)
+{
+	try { pow3_large_1D_out_of_place_real_to_hermitian_planar< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow3_large_1D_out_of_place_real_to_hermitian_planar)
+{
+	try { pow3_large_1D_out_of_place_real_to_hermitian_planar< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow3_large_1D_in_place_real_to_hermitian_interleaved()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( large3 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_interleaved;
+	placeness::placeness_t placeness = placeness::in_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow3_large_1D_in_place_real_to_hermitian_interleaved)
+{
+	try { pow3_large_1D_in_place_real_to_hermitian_interleaved< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow3_large_1D_in_place_real_to_hermitian_interleaved)
+{
+	try { pow3_large_1D_in_place_real_to_hermitian_interleaved< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow3_large_1D_out_of_place_real_to_hermitian_interleaved()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( large3 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_interleaved;
+	placeness::placeness_t placeness = placeness::out_of_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow3_large_1D_out_of_place_real_to_hermitian_interleaved)
+{
+	try { pow3_large_1D_out_of_place_real_to_hermitian_interleaved< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow3_large_1D_out_of_place_real_to_hermitian_interleaved)
+{
+	try { pow3_large_1D_out_of_place_real_to_hermitian_interleaved< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow5_large_1D_out_of_place_real_to_hermitian_planar()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( large5 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t layout = layout::hermitian_planar;
+	placeness::placeness_t placeness = placeness::out_of_place;
+
+	data_pattern pattern = sawtooth;
+	postcallback_real_to_complex<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow5_large_1D_out_of_place_real_to_hermitian_planar)
+{
+	try { pow5_large_1D_out_of_place_real_to_hermitian_planar< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow5_large_1D_out_of_place_real_to_hermitian_planar)
+{
+	try { pow5_large_1D_out_of_place_real_to_hermitian_planar< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
+void pow7_large_1D_in_place_real_to_hermitian_interleaved()
+{
+    std::vector<size_t> lengths;
+    lengths.push_back(large7);
+    size_t batch = 1;
+    std::vector<size_t> input_strides;
+    std::vector<size_t> output_strides;
+    size_t input_distance = 0;
+    size_t output_distance = 0;
+    layout::buffer_layout_t layout = layout::hermitian_interleaved;
+    placeness::placeness_t placeness = placeness::in_place;
+
+    data_pattern pattern = sawtooth;
+    postcallback_real_to_complex<T, cl_T, fftw_T>(pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness);
+}
+
+TEST_F(accuracy_test_postcallback_single, pow7_large_1D_in_place_real_to_hermitian_interleaved)
+{
+	try { pow7_large_1D_in_place_real_to_hermitian_interleaved< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow7_large_1D_in_place_real_to_hermitian_interleaved)
+{
+	try { pow7_large_1D_in_place_real_to_hermitian_interleaved< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
 #pragma endregion
 
 } //namespace

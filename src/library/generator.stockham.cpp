@@ -1546,6 +1546,8 @@ namespace StockhamGenerator
 
 			for(size_t r=rStart; r<rEnd; r++)
 			{
+				std::string val1StrExt;
+
 				for(size_t c=cStart; c<cEnd; c++) // component loop: 0 - real, 1 - imaginary
 				{
 					if(flag == SR_READ) // read operation
@@ -1755,15 +1757,26 @@ namespace StockhamGenerator
 
 								std::string val1Str, val2Str;
 
-								val1Str += "\n\t";
 								if (fft_doPostCallback && !rcFull)
 								{
-									val1Str += fft_postCallback.funcname; val1Str += "("; val1Str += buffer; val1Str += ", ";
-									val1Str += offset; val1Str += " + ( "; val1Str += idxStr; val1Str += " )*"; val1Str += SztToStr(stride);
-									val1Str += ", post_userdata, ";
+									if (interleaved)
+									{
+										val1Str += "\n\t";
+										val1Str += fft_postCallback.funcname; val1Str += "("; val1Str += buffer; val1Str += ", ";
+										val1Str += offset; val1Str += " + ( "; val1Str += idxStr; val1Str += " )*"; val1Str += SztToStr(stride);
+										val1Str += ", post_userdata, ";
+									}
+									else if (c == 0)
+									{
+										val1StrExt += "\n\t";
+										val1StrExt += fft_postCallback.funcname; val1StrExt += "("; val1StrExt += bufferRe; val1StrExt += ", ";
+										val1StrExt += bufferIm; val1StrExt += ", "; val1StrExt += offset; val1StrExt += " + ( "; val1StrExt += idxStr; 
+										val1StrExt += " )*"; val1StrExt += SztToStr(stride); val1StrExt += ", post_userdata, ";
+									}									
 								}
 								else
 								{
+									val1Str += "\n\t";
 									val1Str += buffer; val1Str += "["; val1Str += offset; val1Str += " + ( ";
 									val1Str += idxStr; val1Str += " )*"; val1Str += SztToStr(stride); val1Str += "]";
 									val1Str += tail; val1Str += " = ";
@@ -1819,12 +1832,29 @@ namespace StockhamGenerator
 								val1Str += sclStr;
 								val2Str += sclStr;
 
-								if (!rcFull && fft_doPostCallback) 
+								if (fft_doPostCallback && !rcFull) 
 								{
-									if (fft_postCallback.localMemSize > 0)	val1Str += ", localmem";
-									val1Str += ")";
+									if (!interleaved) 
+									{
+										val1StrExt += val1Str;
+										val1Str.clear();
+
+										if(c == 0) val1StrExt += ", ";
+										else	val1Str += val1StrExt;
+									}
+
+									if (interleaved || c == (cEnd - 1))
+									{
+										if (fft_postCallback.localMemSize > 0)	val1Str += ", localmem";
+										val1Str += ");";
+									}
 								}
-												passStr += val1Str; passStr += ";";
+								else
+								{
+									val1Str += ";";
+								}
+
+												passStr += val1Str; 
 								if(rcFull)	{	passStr += val2Str; passStr += ";"; }
 							}
 							else
@@ -2563,9 +2593,23 @@ namespace StockhamGenerator
 							}
 							else
 							{
-								passStr += bufferOutRe; passStr+= "[outOffset] = ";   passStr += bufferInRe; passStr += "[inOffset]";
-								if(scale != 1.0) { passStr += " * "; passStr += FloatToStr(scale); passStr += FloatSuffix<PR>(); } passStr += ";\n\t";
-								passStr += bufferOutIm; passStr+= "[outOffset] = ";   passStr += "0;\n\t}";
+								if (fft_doPostCallback)
+								{
+									passStr += fft_postCallback.funcname; passStr += "("; passStr += bufferOutRe; passStr += ", "; passStr += bufferOutIm;
+									passStr += ", outOffset, post_userdata, "; passStr += bufferInRe; passStr += "[inOffset]";
+									if(scale != 1.0) { passStr += " * "; passStr += FloatToStr(scale); passStr += FloatSuffix<PR>(); } passStr += ", 0";
+									if (fft_postCallback.localMemSize > 0)
+									{
+										passStr += ", localmem";
+									}
+									passStr += ");\n\t}";
+								}
+								else
+								{
+									passStr += bufferOutRe; passStr+= "[outOffset] = ";   passStr += bufferInRe; passStr += "[inOffset]";
+									if(scale != 1.0) { passStr += " * "; passStr += FloatToStr(scale); passStr += FloatSuffix<PR>(); } passStr += ";\n\t";
+									passStr += bufferOutIm; passStr+= "[outOffset] = ";   passStr += "0;\n\t}";
+								}
 							}
 							passStr += "\n\n\tbarrier(CLK_LOCAL_MEM_FENCE);\n";
 
@@ -2603,9 +2647,23 @@ namespace StockhamGenerator
 							}
 							else
 							{
-								passStr += bufferOutRe2; passStr+= "[outOffset] = ";   passStr += bufferInIm; passStr += "[inOffset]";
-								if(scale != 1.0) { passStr += " * "; passStr += FloatToStr(scale); passStr += FloatSuffix<PR>(); } passStr += ";\n\t";
-								passStr += bufferOutIm2; passStr+= "[outOffset] = ";   passStr += "0;\n\t}";
+								if (fft_doPostCallback)
+								{
+									passStr += fft_postCallback.funcname; passStr += "("; passStr += bufferOutRe2; passStr += ", "; passStr += bufferOutIm2;
+									passStr+= ", outOffset2, post_userdata, "; passStr += bufferInIm; passStr += "[inOffset]";
+									if(scale != 1.0) { passStr += " * "; passStr += FloatToStr(scale); passStr += FloatSuffix<PR>(); } passStr += ", 0";
+									if (fft_postCallback.localMemSize > 0)
+									{
+										passStr += ", localmem";
+									}
+									passStr += ");\n\t}";
+								}
+								else
+								{
+									passStr += bufferOutRe2; passStr+= "[outOffset] = ";   passStr += bufferInIm; passStr += "[inOffset]";
+									if(scale != 1.0) { passStr += " * "; passStr += FloatToStr(scale); passStr += FloatSuffix<PR>(); } passStr += ";\n\t";
+									passStr += bufferOutIm2; passStr+= "[outOffset] = ";   passStr += "0;\n\t}";
+								}
 							}
 							passStr += "\n\n\tbarrier(CLK_LOCAL_MEM_FENCE);\n";
 						}
@@ -2634,7 +2692,7 @@ namespace StockhamGenerator
 						{
 							passStr += "\n\n\tbrv = ((rw > 1) & (me%2 == 1));\n\t";
 							passStr += "if(brv)\n\t{";
-							SweepRegsRC(SR_WRITE, fwd, outInterleaved, outStride, SR_COMP_BOTH, scale, false, true, true, bufferOutRe2, bufferOutIm2, "outOffset", passStr);
+							SweepRegsRC(SR_WRITE, fwd, outInterleaved, outStride, SR_COMP_BOTH, scale, false, true, true, bufferOutRe2, bufferOutIm2, outOffset, passStr);
 							passStr += "\n\t}\n";
 						}
 
@@ -3570,11 +3628,13 @@ namespace StockhamGenerator
 					}
 					else
 					{
-						if(!rcSimple)	{	str += "__global "; str += rType; str += " *lwbOutRe2;\n\t"; }
-						if(!rcSimple)	{	str += "__global "; str += rType; str += " *lwbOutIm2;\n\t"; }
-											str += "__global "; str += rType; str += " *lwbOutRe;\n\t";
-											str += "__global "; str += rType; str += " *lwbOutIm;\n\n";
-
+						if (!params.fft_hasPostCallback)	
+						{
+							if(!rcSimple)	{	str += "__global "; str += rType; str += " *lwbOutRe2;\n\t"; }
+							if(!rcSimple)	{	str += "__global "; str += rType; str += " *lwbOutIm2;\n\t"; }
+												str += "__global "; str += rType; str += " *lwbOutRe;\n\t";
+												str += "__global "; str += rType; str += " *lwbOutIm;\n\n";
+						}
 					}
 				}
 				else
@@ -3747,17 +3807,21 @@ namespace StockhamGenerator
 							}
 						}
 
-						if(outInterleaved || outReal)
+						if (!params.fft_hasPostCallback)
 						{
-							if(!rcSimple) {	str += "lwbOut2 = gbOut + oOffset2;\n\t"; }
-											str += "lwbOut = gbOut + oOffset;\n\n";
-						}
-						else
-						{
-							if(!rcSimple) {	str += "lwbOutRe2 = gbOutRe + oOffset2;\n\t"; }
-							if(!rcSimple) {	str += "lwbOutIm2 = gbOutIm + oOffset2;\n\t"; }
-											str += "lwbOutRe = gbOutRe + oOffset;\n\t";
-											str += "lwbOutIm = gbOutIm + oOffset;\n\n";
+							if(outInterleaved || outReal)
+							{
+								if(!rcSimple) {	str += "lwbOut2 = gbOut + oOffset2;\n\t"; }
+												str += "lwbOut = gbOut + oOffset;\n\n";
+							}
+							else
+							{
+								
+								if(!rcSimple) {	str += "lwbOutRe2 = gbOutRe + oOffset2;\n\t"; }
+								if(!rcSimple) {	str += "lwbOutIm2 = gbOutIm + oOffset2;\n\t"; }
+												str += "lwbOutRe = gbOutRe + oOffset;\n\t";
+												str += "lwbOutIm = gbOutIm + oOffset;\n\n";
+							}
 						}
 					}
 				}
@@ -3974,8 +4038,8 @@ namespace StockhamGenerator
 						}
 						else							inBuf  = (params.fft_hasPreCallback) ? "gbInRe, gbInRe, gbInIm, gbInIm, " : "lwbInRe, lwbInRe2, lwbInIm, lwbInIm2, ";
 
-						if(outInterleaved || outReal)	outBuf = params.fft_hasPostCallback ? "gb, gb" : "lwbOut, lwbOut2";
-						else							outBuf = "lwbOutRe, lwbOutRe2, lwbOutIm, lwbOutIm2";
+						if(outInterleaved || outReal)	outBuf = params.fft_hasPostCallback ? ((params.fft_placeness == CLFFT_INPLACE) ? "gb, gb" : "gbOut, gbOut") : "lwbOut, lwbOut2";
+						else							outBuf = params.fft_hasPostCallback ? "gbOutRe, gbOutRe, gbOutIm, gbOutIm" : "lwbOutRe, lwbOutRe2, lwbOutIm, lwbOutIm2";
 					}
 				}
 				else
