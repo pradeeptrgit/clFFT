@@ -4125,6 +4125,8 @@ namespace StockhamGenerator
 						//if post-calback set 
 						if (params.fft_hasPostCallback)
 						{
+							if (r2c && !rcSimple) { str += ", "; str += outOffset; str += "2"; }
+
 							str += ", post_userdata";
 						}
 
