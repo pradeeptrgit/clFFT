@@ -730,10 +730,10 @@ public:
 			{
 				postcallbackstr = (precision == CLFFT_SINGLE) ? STRINGIFY(POST_MULVAL_PLANAR) : STRINGIFY(POST_MULVAL_PLANAR_DP);
 			}
-			/*else if (input.is_real())
+			else if (output.is_real())
 			{
-				postcallbackstr = (precision == CLFFT_SINGLE) ? STRINGIFY(PRE_MULVAL_REAL) : STRINGIFY(PRE_MULVAL_REAL_DP);
-			}*/
+				postcallbackstr = (precision == CLFFT_SINGLE) ? STRINGIFY(POST_MULVAL_REAL) : STRINGIFY(POST_MULVAL_REAL_DP);
+			}
 		}
 
 		//post-callback user data
