@@ -137,6 +137,18 @@
 				*((__global float2*)output + outoffset) = fftoutput * avg; \n \
 				}
 
+#define POST_MULVAL_REAL void mulval_post(__global void *output, uint outoffset, __global void *userdata, float fftoutput )\n \
+				{ \n \
+				float scalar = *((__global float*)userdata + outoffset); \n \
+				*((__global float*)output + outoffset) = fftoutput * scalar; \n \
+				}
+
+#define POST_MULVAL_REAL_DP void mulval_post(__global void *output, uint outoffset, __global void *userdata, double fftoutput )\n \
+				{ \n \
+				double scalar = *((__global double*)userdata + outoffset); \n \
+				*((__global double*)output + outoffset) = fftoutput * scalar; \n \
+				}
+
 typedef struct USER_DATA  
 				{  
 				float scalar1;  

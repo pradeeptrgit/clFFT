@@ -855,6 +855,68 @@ void precallback_complex_to_real( data_pattern pattern,
 	EXPECT_EQ( true, test_fft.result() == reference.result() );
 }
 
+template< class T, class cl_T, class fftw_T >
+void postcallback_complex_to_real( data_pattern pattern,
+	std::vector<size_t> lengths, size_t batch,
+	std::vector<size_t> input_strides, std::vector<size_t> output_strides,
+	size_t input_distance, size_t output_distance,
+	layout::buffer_layout_t in_layout,
+	placeness::placeness_t placeness,
+	T scale = 1.0f )
+{
+	fftw<T, fftw_T> data_maker( lengths.size(), &lengths[0], batch, r2c );
+
+	if( pattern == sawtooth )
+	{
+		data_maker.set_data_to_sawtooth(1.0f);
+	}
+	else if( pattern == value )
+	{
+		data_maker.set_all_data_to_value(2.0f);
+	}
+	else if( pattern == impulse )
+	{
+		data_maker.set_data_to_impulse();
+	}
+	else if( pattern == erratic )
+	{
+		data_maker.set_data_to_random();
+	}
+	else
+	{
+		throw std::runtime_error( "invalid pattern type in complex_to_real()" );
+	}
+
+	data_maker.transform();
+
+	clfft<T, cl_T> test_fft( static_cast<clfftDim>(lengths.size()), &lengths[0],
+		input_strides.empty() ? NULL : &input_strides[0],
+		output_strides.empty() ? NULL : &output_strides[0],
+		batch, input_distance, output_distance,
+		cl_layout(in_layout), cl_layout(layout::real),
+		cl_placeness(placeness) );
+	test_fft.set_input_to_buffer( data_maker.result() );
+
+	fftw<T, fftw_T> reference( lengths.size(), &lengths[0], batch, c2r );
+	reference.set_input_to_buffer(data_maker.result());
+
+	// if we're starting with unequal data, we're destined for failure
+	EXPECT_EQ( true, test_fft.input_buffer() == reference.input_buffer() );
+
+	test_fft.backward_scale( scale );
+	reference.backward_scale( scale );
+
+	//set postcallback values
+	test_fft.set_output_postcallback();
+
+	test_fft.transform();
+	reference.transform();
+
+	reference.set_output_postcallback();
+
+	EXPECT_EQ( true, test_fft.result() == reference.result() );
+}
+
 /*****************************************************/
 /*****************************************************/
 // dimension is inferred from lengths.size()

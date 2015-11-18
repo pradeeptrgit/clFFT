@@ -305,7 +305,7 @@ TEST_F(accuracy_test_callback_single, postcall_lds_1D_forward_64_in_place_comple
 #pragma region Complex_To_Real
 
 template< typename T, typename cl_T, typename fftw_T >
-void mixed_radix_hermitian_to_real( size_t problem_size )
+void mixed_radix_hermitian_to_real_precallback( size_t problem_size )
 {
 	try
 	{
@@ -336,13 +336,54 @@ void mixed_radix_hermitian_to_real( size_t problem_size )
 TEST_P( mixed_radix_precallback, single_precision_hermitian_to_real_auto_generated ) {
 	size_t problem_size = GetParam();
 	RecordProperty("problem_size", (int)problem_size);
-	mixed_radix_hermitian_to_real<float, cl_float, fftwf_complex>(problem_size);
+	mixed_radix_hermitian_to_real_precallback<float, cl_float, fftwf_complex>(problem_size);
 }
 
 TEST_P( mixed_radix_precallback, double_precision_hermitian_to_real_auto_generated ) {
 	size_t problem_size = GetParam();
 	RecordProperty("problem_size", (int)problem_size);
-	mixed_radix_hermitian_to_real<double, cl_double, fftw_complex>(problem_size);
+	mixed_radix_hermitian_to_real_precallback<double, cl_double, fftw_complex>(problem_size);
+}
+
+template< typename T, typename cl_T, typename fftw_T >
+void mixed_radix_hermitian_to_real_postcallback( size_t problem_size )
+{
+	try
+	{
+		if(verbose) std::cout << "Now testing problem size " << problem_size << std::endl;
+
+		std::vector<size_t> lengths;
+		lengths.push_back( problem_size );
+		size_t batch = 1;
+
+		std::vector<size_t> input_strides;
+		std::vector<size_t> output_strides;
+
+		size_t input_distance = 0;
+		size_t output_distance = 0;
+
+		layout::buffer_layout_t layout = layout::hermitian_interleaved;
+
+		placeness::placeness_t placeness = placeness::in_place;
+
+		data_pattern pattern = sawtooth;
+		postcallback_complex_to_real<T, cl_T, fftw_T>( pattern, lengths, batch, input_strides, output_strides, input_distance, output_distance, layout, placeness );
+	}
+	catch( const std::exception& err ) {
+		handle_exception(err);
+	}
+}
+
+TEST_P( mixed_radix_postcallback, single_precision_hermitian_to_real_auto_generated ) {
+	size_t problem_size = GetParam();
+	RecordProperty("problem_size", (int)problem_size);
+	mixed_radix_hermitian_to_real_postcallback<float, cl_float, fftwf_complex>(problem_size);
+}
+
+TEST_P( mixed_radix_postcallback, double_precision_hermitian_to_real_auto_generated ) {
+	size_t problem_size = GetParam();
+	RecordProperty("problem_size", (int)problem_size);
+	mixed_radix_hermitian_to_real_postcallback<double, cl_double, fftw_complex>(problem_size);
 }
 
 #pragma endregion
