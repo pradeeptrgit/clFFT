@@ -2208,14 +2208,6 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 					transPlanY->postcallUserData = fftPlan->postcallUserData;
 				}
 
-				//Set callback data if set on top level plan
-				if (fftPlan->hasPostCallback)
-				{
-					transPlanY->hasPostCallback = true;
-					transPlanY->postCallbackParam = fftPlan->postCallbackParam;
-					transPlanY->postcallUserData = fftPlan->postcallUserData;
-				}
-
 				OPENCL_V(clfftBakePlan(fftPlan->planTY, numQueues, commQueueFFT, NULL, NULL ),
 					_T( "BakePlan for planTY failed" ) );
 
