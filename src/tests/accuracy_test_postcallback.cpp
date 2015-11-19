@@ -721,6 +721,37 @@ TEST_F(accuracy_test_postcallback_double, pow5_large_1D_forward_in_place_complex
 }
 
 template< class T, class cl_T, class fftw_T >
+void pow5_large_1D_forward_in_place_complex_planar_to_complex_planar()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( large5 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t in_layout = layout::complex_planar;
+	layout::buffer_layout_t out_layout = layout::complex_planar;
+	placeness::placeness_t placeness = placeness::in_place;
+	direction::direction_t direction = direction::forward;
+
+	data_pattern pattern = sawtooth;
+	postcallback_complex_to_complex<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness );
+}
+
+TEST_F(accuracy_test_postcallback_single, pow5_large_1D_forward_in_place_complex_planar_to_complex_planar)
+{
+	try { pow5_large_1D_forward_in_place_complex_planar_to_complex_planar< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+TEST_F(accuracy_test_postcallback_double, pow5_large_1D_forward_in_place_complex_planar_to_complex_planar)
+{
+	try { pow5_large_1D_forward_in_place_complex_planar_to_complex_planar< double, cl_double, fftw_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
+template< class T, class cl_T, class fftw_T >
 void pow7_normal_1D_backward_out_of_place_complex_planar_to_complex_planar()
 {
     std::vector<size_t> lengths;
