@@ -1085,7 +1085,28 @@ static const size_t reShapeFactor = 2;
 //	Feed this generator the FFTPlan, and it returns the generated program as a string
 clfftStatus FFTGeneratedTransposeSquareAction::generateKernel ( FFTRepo& fftRepo, const cl_command_queue commQueueFFT )
 {
-	
+	//Requested local memory size by callback must not exceed the device LDS limits after factoring the LDS size required by main FFT kernel
+	if ((this->signature.fft_hasPreCallback && this->signature.fft_preCallback.localMemSize > 0) || 
+		(this->signature.fft_hasPostCallback && this->signature.fft_postCallback.localMemSize > 0))
+	{
+		assert(!(this->signature.fft_hasPreCallback && this->signature.fft_hasPostCallback));
+
+		bool validLDSSize = false;
+		size_t requestedCallbackLDS = 0;
+
+		if (this->signature.fft_hasPreCallback && this->signature.fft_preCallback.localMemSize > 0)
+			requestedCallbackLDS = this->signature.fft_preCallback.localMemSize;
+		else if (this->signature.fft_hasPostCallback && this->signature.fft_postCallback.localMemSize > 0)
+			requestedCallbackLDS = this->signature.fft_postCallback.localMemSize;
+		
+		validLDSSize = ((2 * this->plan->ElementSize() * 16 * reShapeFactor * 16 * reShapeFactor) + requestedCallbackLDS) < this->plan->envelope.limit_LocalMemSize;
+		
+		if(!validLDSSize)
+		{
+			fprintf(stderr, "Requested local memory size not available\n");
+			return CLFFT_INVALID_ARG_VALUE;
+		}
+	}
 
     std::string programCode;
     OPENCL_V( genTransposeKernel( this->signature, programCode, lwSize, reShapeFactor ), _T( "GenerateTransposeKernel() failed!" ) );

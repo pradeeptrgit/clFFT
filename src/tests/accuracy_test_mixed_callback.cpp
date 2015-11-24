@@ -297,6 +297,31 @@ TEST_F(accuracy_test_callback_single, postcall_lds_1D_forward_64_in_place_comple
 	catch( const std::exception& err ) { handle_exception(err);	}
 }
 
+template< class T, class cl_T, class fftw_T >
+void pre_and_post_callback_lds_1D_forward_64_in_place_complex_to_complex()
+{
+	std::vector<size_t> lengths;
+	lengths.push_back( 64 );
+	size_t batch = 1;
+	std::vector<size_t> input_strides;
+	std::vector<size_t> output_strides;
+	size_t input_distance = 0;
+	size_t output_distance = 0;
+	layout::buffer_layout_t in_layout = layout::complex_interleaved;
+	layout::buffer_layout_t out_layout = layout::complex_interleaved;
+	placeness::placeness_t placeness = placeness::in_place;
+	direction::direction_t direction = direction::forward;
+
+	data_pattern pattern = impulse;
+	pre_and_post_callback_complex_to_complex<T, cl_T, fftw_T>( pattern, direction, lengths, batch, input_strides, output_strides, input_distance, output_distance, in_layout, out_layout, placeness, 1.0f, true );
+}
+
+TEST_F(accuracy_test_callback_single, pre_and_post_callback_lds_1D_forward_64_in_place_complex_to_complex)
+{
+	try { pre_and_post_callback_lds_1D_forward_64_in_place_complex_to_complex< float, cl_float, fftwf_complex >(); }
+	catch( const std::exception& err ) { handle_exception(err);	}
+}
+
 #pragma endregion
 
 /**********************************************************************************************
