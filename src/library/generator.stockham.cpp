@@ -3654,7 +3654,7 @@ namespace StockhamGenerator
 						str += "uint ioOffset;\n\t";
 
 						//Skip if callback is set 
-						if (!(blockCompute && params.fft_hasPreCallback) || !params.fft_hasPostCallback)
+						if (!params.fft_hasPreCallback || !params.fft_hasPostCallback)
 						{
 							if(inInterleaved)
 							{
@@ -3849,7 +3849,7 @@ namespace StockhamGenerator
 						str += "\t";
 
 						//Skip if callback is set 
-						if (!(blockCompute && params.fft_hasPreCallback) || !params.fft_hasPostCallback)
+						if (!params.fft_hasPreCallback || !params.fft_hasPostCallback)
 						{
 							if(inInterleaved)
 							{
@@ -4146,8 +4146,15 @@ namespace StockhamGenerator
 						}
 						if (params.fft_postCallback.localMemSize > 0)
 						{
-							//TODO: if precallback localmem also requested, send the localmem with the right offset
-							str += ", localmem";
+							//if precallback localmem also requested, send the localmem with the right offset
+							if (params.fft_hasPreCallback && params.fft_preCallback.localMemSize > 0)
+							{
+								str += ", ((__local char *)localmem + "; str += SztToStr(params.fft_preCallback.localMemSize); str += ")";
+							}
+							else
+							{
+								str += ", localmem";
+							}
 						}
 					}
 
@@ -4247,8 +4254,15 @@ namespace StockhamGenerator
 
 								if (params.fft_postCallback.localMemSize > 0)
 								{
-									//TODO: if precallback localmem also requested, send the localmem with the right offset
-									str += ", localmem";
+									//if precallback localmem also requested, send the localmem with the right offset
+									if (params.fft_hasPreCallback && params.fft_preCallback.localMemSize > 0)
+									{
+										str += ", ((__local char *)localmem + "; str += SztToStr(params.fft_preCallback.localMemSize); str += ")";
+									}
+									else
+									{
+										str += ", localmem";
+									}
 								}
 							}
 
@@ -4333,7 +4347,14 @@ namespace StockhamGenerator
 
 								if (params.fft_postCallback.localMemSize > 0)
 								{
-									str += ", localmem";
+									if (params.fft_hasPreCallback && params.fft_preCallback.localMemSize > 0)
+									{
+										str += ", (char *)(localmem + "; str += SztToStr(params.fft_preCallback.localMemSize); str += ")";
+									}
+									else
+									{
+										str += ", localmem";
+									}
 								}
 								str += ");\n";
 
@@ -4600,12 +4621,20 @@ clfftStatus FFTGeneratedStockhamAction::generateKernel(FFTRepo& fftRepo, const c
 	}
 
 	//Requested local memory size by callback must not exceed the device LDS limits after factoring the LDS size required by main FFT kernel
-	if (this->signature.fft_hasPreCallback && this->signature.fft_preCallback.localMemSize > 0)
+	if ((this->signature.fft_hasPreCallback && this->signature.fft_preCallback.localMemSize > 0) || 
+		(this->signature.fft_hasPostCallback && this->signature.fft_postCallback.localMemSize > 0))
 	{
 		bool validLDSSize = false;
+		size_t requestedCallbackLDS = 0;
+
+		if (this->signature.fft_hasPreCallback && this->signature.fft_preCallback.localMemSize > 0)
+			requestedCallbackLDS = this->signature.fft_preCallback.localMemSize;
+		if (this->signature.fft_hasPostCallback && this->signature.fft_postCallback.localMemSize > 0)
+			requestedCallbackLDS += this->signature.fft_postCallback.localMemSize;
+
 		if (this->plan->blockCompute)
 		{
-			validLDSSize = ((this->signature.blockLDS * this->plan->ElementSize()) +  this->signature.fft_preCallback.localMemSize) < this->plan->envelope.limit_LocalMemSize;
+			validLDSSize = ((this->signature.blockLDS * this->plan->ElementSize()) +  requestedCallbackLDS) < this->plan->envelope.limit_LocalMemSize;
 		}
 		else
 		{
@@ -4626,8 +4655,9 @@ clfftStatus FFTGeneratedStockhamAction::generateKernel(FFTRepo& fftRepo, const c
 			size_t ldsSize = halfLds ? length*numTrans : 2*length*numTrans;
 			size_t elementSize = ((this->signature.fft_precision == CLFFT_DOUBLE) || (this->signature.fft_precision == CLFFT_DOUBLE_FAST)) ? sizeof(double) : sizeof(float);
 
-			validLDSSize = ((ldsSize * elementSize) + this->signature.fft_preCallback.localMemSize) < this->plan->envelope.limit_LocalMemSize;
+			validLDSSize = ((ldsSize * elementSize) + requestedCallbackLDS) < this->plan->envelope.limit_LocalMemSize;
 		}
+
 		if(!validLDSSize)
 		{
 			fprintf(stderr, "Requested local memory size not available\n");

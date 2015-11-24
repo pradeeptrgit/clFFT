@@ -92,7 +92,7 @@
 				barrier(CLK_LOCAL_MEM_FENCE); \n \
 				float prev = offset <= 0 ? 0 : *(lds - 1); \n \
 				float next = offset >= get_global_size(0) ? 0 : *(lds + 1); \n \
-				float avg = (prev + *lds + next)/3.0;\n \
+				float avg = (prev + *lds + next)/3.0f;\n \
 				float2 ret = *((__global float2*)in + offset) * avg; \n \
 				return ret; \n \
 				}
@@ -124,16 +124,25 @@
 				*((__global double*)outputIm + outoffset) = fftoutputIm * scalar; \n \
 				}
 
-//Postcallback test for LDS - works when 1 WI works on one element
+//Postcallback test for LDS - works when 1 WI works on one element. 
+//Assumes 1D FFT of length 64.
 #define POST_MULVAL_LDS void mulval_post(__global void *output, uint outoffset, __global void *userdata, float2 fftoutput, __local void* localmem)\n \
 				{ \n \
 				uint lid = get_local_id(0); \n \
-				__local float* lds = (__local float*)localmem + lid; \n \
-				lds[0] = *((__global float*)userdata + outoffset); \n \
+				__local float* lds; \n \
+				if (outoffset < 16) \n \
+				{ \n \
+				lds  = (__local float*)localmem + lid*4; \n \
+				lds[0] = *((__global float*)userdata + lid*4); \n \
+				lds[1] = *((__global float*)userdata + lid*4 + 1); \n \
+				lds[2] = *((__global float*)userdata + lid*4 + 2); \n \
+				lds[3] = *((__global float*)userdata + lid*4 + 3); \n \
+				} \n \
 				barrier(CLK_LOCAL_MEM_FENCE); \n \
+				lds  = (__local float*)localmem + outoffset; \n \
 				float prev = outoffset <= 0 ? 0 : *(lds - 1); \n \
 				float next = outoffset >= (get_global_size(0) - 1) ? 0 : *(lds + 1); \n \
-				float avg = (prev + *lds + next)/3.0;\n \
+				float avg = (prev + *lds + next)/3.0f; \n \
 				*((__global float2*)output + outoffset) = fftoutput * avg; \n \
 				}
 
