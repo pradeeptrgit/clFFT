@@ -609,19 +609,6 @@ clfftStatus FFTAction::enqueue(clfftPlanHandle plHandle,
 		}
 	}
 
-	//If post-callback function is set for the plan, pass the appropriate aruments
-	if (this->plan->hasPostCallback)
-	{
-		OPENCL_V( clSetKernelArg( kern, uarg++, sizeof( cl_mem ), (void*)&this->plan->postcallUserData ), _T( "clSetKernelArg failed" ) );
-
-		//Pass LDS size arument if set. 
-		//TODO : Check if requested LDS size is available
-		if (this->plan->postCallbackParam.localMemSize > 0)
-		{
-			OPENCL_V( clSetKernelArg( kern, uarg++, this->plan->postCallbackParam.localMemSize, NULL ), _T( "clSetKernelArg failed" ) );
-		}
-	}
-
     std::vector< size_t > gWorkSize;
     std::vector< size_t > lWorkSize;
     clfftStatus result = this->getWorkSizes (gWorkSize, lWorkSize);

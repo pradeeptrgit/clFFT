@@ -4290,8 +4290,15 @@ namespace StockhamGenerator
 
 								if (params.fft_postCallback.localMemSize > 0)
 								{
-									//TODO: if precallback localmem also requested, send the localmem with the right offset
-									str += ", localmem";
+									//if precallback localmem also requested, send the localmem with the right offset
+									if (params.fft_hasPreCallback && params.fft_preCallback.localMemSize > 0)
+									{
+										str += ", ((__local char *)localmem + "; str += SztToStr(params.fft_preCallback.localMemSize); str += ")";
+									}
+									else
+									{
+										str += ", localmem";
+									}
 								}
 							}
 
