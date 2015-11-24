@@ -303,7 +303,7 @@ void pre_and_post_callback_complex_to_complex( data_pattern pattern, direction::
 	std::vector<size_t> input_strides, std::vector<size_t> output_strides,
 	size_t input_distance, size_t output_distance,
 	layout::buffer_layout_t in_layout, layout::buffer_layout_t out_layout,
-	placeness::placeness_t placeness, T scale = 1.0f)
+	placeness::placeness_t placeness, T scale = 1.0f, bool withLDS = false)
 {
 	clfft<T, cl_T> test_fft( static_cast<clfftDim>(lengths.size()), &lengths[0],
 		input_strides.empty() ? NULL : &input_strides[0],
@@ -343,12 +343,23 @@ void pre_and_post_callback_complex_to_complex( data_pattern pattern, direction::
 	// if we're starting with unequal data, we're destined for failure
 	EXPECT_EQ( true, test_fft.input_buffer() == reference.input_buffer() );
 
-	//set precallback values
-	test_fft.set_input_precallback();
-	reference.set_input_precallback();
+	//set callback values
+	if (withLDS)
+	{
+		unsigned int localMemSize = 64 * sizeof(T);
+		test_fft.set_input_precallback(localMemSize);
+		reference.set_input_precallback_special();
 
-	//set postcallback values
-	test_fft.set_output_postcallback();
+		test_fft.set_output_postcallback(localMemSize);
+	}
+	else
+	{
+		test_fft.set_input_precallback();
+		reference.set_input_precallback();
+
+		//set postcallback values
+		test_fft.set_output_postcallback();
+	}
 
 	if( direction == direction::forward )
 	{
@@ -373,7 +384,14 @@ void pre_and_post_callback_complex_to_complex( data_pattern pattern, direction::
 	test_fft.transform();
 
 	//update reference for postcallback
-	reference.set_output_postcallback();
+	if (withLDS)
+	{
+		reference.set_output_postcallback_special();
+	}
+	else
+	{
+		reference.set_output_postcallback();
+	}
 
 	EXPECT_EQ( true, test_fft.result() == reference.result() );
 }
