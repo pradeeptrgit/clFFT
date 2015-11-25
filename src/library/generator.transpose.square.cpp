@@ -294,7 +294,7 @@ static clfftStatus genTransposeKernel( const FFTGeneratedTransposeSquareAction::
         dtComplex = "double2";
 
 		// Emit code that enables double precision in the kernel
-        clKernWrite( transKernel, 0 ) << "#ifdef cl_khr_fp64" << std::endl; 
+        clKernWrite( transKernel, 0 ) << "#ifdef cl_khr_fp64" << std::endl;
         clKernWrite( transKernel, 3 ) << "#pragma OPENCL EXTENSION cl_khr_fp64 : enable" << std::endl;
         clKernWrite( transKernel, 0 ) << "#else" << std::endl;
         clKernWrite( transKernel, 3 ) <<  "#pragma OPENCL EXTENSION cl_amd_fp64 : enable" << std::endl;
