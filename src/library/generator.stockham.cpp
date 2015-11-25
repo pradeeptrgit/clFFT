@@ -4244,8 +4244,7 @@ namespace StockhamGenerator
 							str += ldsArgs; str += ", ";
 							str += outBuf;
 
-							str += IterRegs("&"); str += ");\n";
-							if (!halfLds) { str += exTab; str += "\tbarrier(CLK_LOCAL_MEM_FENCE);\n"; }
+							str += IterRegs("&"); 
 							
 							if (!blockCompute && params.fft_hasPostCallback)
 							{
@@ -4266,8 +4265,9 @@ namespace StockhamGenerator
 									}
 								}
 							}
-
 							str += ");\n";
+							
+							if (!halfLds) { str += exTab; str += "\tbarrier(CLK_LOCAL_MEM_FENCE);\n"; }
 						}
 						else // intermediate pass
 						{
