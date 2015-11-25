@@ -4277,32 +4277,9 @@ namespace StockhamGenerator
 									}
 								}
 							}
-
 							str += ");\n";
 							
 							if (!halfLds) { str += exTab; str += "\tbarrier(CLK_LOCAL_MEM_FENCE);\n"; }
-							
-							if (!blockCompute && params.fft_hasPostCallback)
-							{
-								if ((c2r || r2c) && !rcSimple) { str += ", "; str += outOffset; str += "2"; }
-
-								str += ", post_userdata";
-
-								if (params.fft_postCallback.localMemSize > 0)
-								{
-									//if precallback localmem also requested, send the localmem with the right offset
-									if (params.fft_hasPreCallback && params.fft_preCallback.localMemSize > 0)
-									{
-										str += ", ((__local char *)localmem + "; str += SztToStr(params.fft_preCallback.localMemSize); str += ")";
-									}
-									else
-									{
-										str += ", localmem";
-									}
-								}
-							}
-
-							str += ");\n";
 						}
 						else // intermediate pass
 						{
