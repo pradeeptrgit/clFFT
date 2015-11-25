@@ -3621,7 +3621,7 @@ namespace StockhamGenerator
 						if (!params.fft_hasPostCallback)	
 						{ 
 							if(!rcSimple)	{	str += "__global "; str += r2Type; str += " *lwbOut2;\n\t"; }
-												str += "__global "; str += r2Type; str += " *lwbOut;\n\n";
+												str += "__global "; str += r2Type; str += " *lwbOut;\n";
 						}
 					}
 					else if(outReal)
@@ -3629,7 +3629,7 @@ namespace StockhamGenerator
 						if (!params.fft_hasPostCallback)	
 						{
 							if(!rcSimple)	{	str += "__global "; str += rType; str += " *lwbOut2;\n\t"; }
-												str += "__global "; str += rType; str += " *lwbOut;\n\n";
+												str += "__global "; str += rType; str += " *lwbOut;\n";
 						}
 					}
 					else
@@ -3639,9 +3639,10 @@ namespace StockhamGenerator
 							if(!rcSimple)	{	str += "__global "; str += rType; str += " *lwbOutRe2;\n\t"; }
 							if(!rcSimple)	{	str += "__global "; str += rType; str += " *lwbOutIm2;\n\t"; }
 												str += "__global "; str += rType; str += " *lwbOutRe;\n\t";
-												str += "__global "; str += rType; str += " *lwbOutIm;\n\n";
+												str += "__global "; str += rType; str += " *lwbOutIm;\n";
 						}
 					}
+					str += "\n";
 				}
 				else
 				{
@@ -3654,14 +3655,15 @@ namespace StockhamGenerator
 						{
 							if(inInterleaved)
 							{
-								str += "__global "; str += r2Type; str += " *lwb;\n\n";
+								str += "__global "; str += r2Type; str += " *lwb;\n";
 							}
 							else
 							{
 								str += "__global "; str += rType; str += " *lwbRe;\n\t";
-								str += "__global "; str += rType; str += " *lwbIm;\n\n";
+								str += "__global "; str += rType; str += " *lwbIm;\n";
 							}
 						}
+						str += "\n";
 					}
 					else
 					{
@@ -3687,14 +3689,15 @@ namespace StockhamGenerator
 						{
 							if(outInterleaved)
 							{
-								str += "__global "; str += r2Type; str += " *lwbOut;\n\n";
+								str += "__global "; str += r2Type; str += " *lwbOut;\n";
 							}
 							else
 							{
 								str += "__global "; str += rType; str += " *lwbOutRe;\n\t";
-								str += "__global "; str += rType; str += " *lwbOutIm;\n\n";
+								str += "__global "; str += rType; str += " *lwbOutIm;\n";
 							}
 						}
+						str += "\n";
 					}
 				}
 
