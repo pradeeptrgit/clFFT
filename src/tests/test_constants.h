@@ -76,7 +76,7 @@
 				return ret; \n \
 				}
 
-#define PRE_MULVAL_REAL_DP double mulval(__global void* in, uint offset, __global void* userdata)\n \
+#define PRE_MULVAL_REAL_DP double mulval_pre(__global void* in, uint offset, __global void* userdata)\n \
 				{ \n \
 				double scalar = *((__global double*)userdata + offset); \n \
 				double ret = *((__global double*)in + offset) * scalar; \n \
