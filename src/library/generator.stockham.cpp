@@ -2219,18 +2219,7 @@ namespace StockhamGenerator
 					passStr += ", __local void* post_localmem";
 				}
 			}
-
-			//Include post-callback parameters if post-callback is set
-			if (fft_doPostCallback )
-			{
-				passStr += ", __global void* post_userdata";
-
-				if (fft_postCallback.localMemSize > 0)
-				{
-					passStr += ", __local void* post_localmem";
-				}
-			}
-
+			
 			passStr += ")\n{\n";
 
 			// Register Declarations
