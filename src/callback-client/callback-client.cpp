@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 			( "help,h",        "produces this help message" )
 			( "dumpKernels,d", "FFT engine will dump generated OpenCL FFT kernels to disk (default: dump off)" )
 			( "batchSize,b",   po::value< size_t >( &batchSize )->default_value( 1 ), "If this value is greater than one, arrays will be used " )
-			( "profile,p",     po::value< cl_uint >( &profile_count )->default_value( 10 ), "Time and report the kernel speed of the FFT (default: profiling off)" )
+			( "profile,p",     po::value< cl_uint >( &profile_count )->default_value( 10 ), "Time and report the kernel speed of the FFT (default: profiling on)" )
 			;
 
 		po::variables_map vm;
@@ -48,14 +48,8 @@ int main(int argc, char **argv)
 		}
 			
 		clfftDim dim = CLFFT_1D;
-		if( lengths[ 1 ] > 1 )
-		{
-			dim	= CLFFT_2D;
-		}
-		if( lengths[ 2 ] > 1 )
-		{
-			dim	= CLFFT_3D;
-		}
+		
+		tout << "\nRunning FFT for length " << BATCH_LENGTH << " and batch size " << batchSize << std::endl;
 
 		 // Real-Complex cases, SP
 		
@@ -380,6 +374,7 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 
 	//Launch pre-process kernel
 	size_t gSize = fftLength;
+	size_t lSize = 64;
 	status = clEnqueueNDRangeKernel( commandQueue, prekernel, 1,
 											NULL, &gSize, NULL, 0, NULL, NULL );
 	OPENCL_V_THROW( status, "clEnqueueNDRangeKernel failed" );
@@ -391,9 +386,22 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 		&in32bitfftbuffer, &outfftbuffer, clMedBuffer ),
 		"clfftEnqueueTransform failed" );
 	
-	//Launch post-process kernel
-	status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
-											NULL, &gSize, NULL, 0, NULL, NULL );
+	//Launch pre-process kernel
+	if (fftLength % 64 == 0) 
+	{
+		status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
+												NULL, &gSize, &lSize, 0, NULL, NULL );
+	}
+	else if (fftLength % 32 == 0) 
+	{
+		lSize = 32;
+		status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
+												NULL, &gSize, &lSize, 0, NULL, NULL );
+	}
+	else
+		status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
+												NULL, &gSize, NULL, 0, NULL, NULL );
+
 	OPENCL_V_THROW( status, "clEnqueueNDRangeKernel failed" );
 
 	OPENCL_V_THROW( clFinish( commandQueue ), "clFinish failed" );
@@ -428,8 +436,22 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 			//Launch post-process kernel
 			OPENCL_V_THROW( clSetKernelArg( postkernel, 0, sizeof( cl_mem ), (void*)&outfftbuffer ), "clSetKernelArg failed" );
 
-			status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
-													NULL, &gSize, NULL, 0, NULL, NULL );
+			lSize = 64;
+			if (fftLength % 64 == 0) 
+			{
+				status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
+														NULL, &gSize, &lSize, 0, NULL, NULL );
+			}
+			else if (fftLength % 32 == 0) 
+			{
+				lSize = 32;
+				status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
+														NULL, &gSize, &lSize, 0, NULL, NULL );
+			}
+			else
+				status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
+														NULL, &gSize, NULL, 0, NULL, NULL );
+
 			OPENCL_V_THROW( status, "clEnqueueNDRangeKernel failed" );
 
 			OPENCL_V_THROW( clFinish( commandQueue ), "clFinish failed" );
@@ -443,6 +465,7 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 	//cleanup preprocess kernel opencl objects
 	OPENCL_V_THROW( clReleaseProgram( program ), "Error: In clReleaseProgram\n" );
 	OPENCL_V_THROW( clReleaseKernel( prekernel ), "Error: In clReleaseKernel\n" );
+	OPENCL_V_THROW( clReleaseKernel( postkernel ), "Error: In clReleaseKernel\n" );
 
 	if(clMedBuffer) clReleaseMemObject(clMedBuffer);
 
@@ -458,10 +481,6 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 
 		refout = get_R2C_fftwf_output(inlengths, fftLength, (int)batchSize, inLayout, dim);
 
-		/*for( cl_uint i = 0; i < fftLength/2; i++)
-		{
-			std::cout << "i " << i << " refreal " << refout[i][0] << " refimag " << refout[i][1] << " clreal " << output[i].real() << " climag " << output[i].imag() << std::endl;
-		}*/
 		if (!compare<fftwf_complex, T>(refout, output, fftLength/2))
 		{
 			std::cout << "\n\n\t\tInternal Client Test (Separate Pre and Post process kernels) *****FAIL*****" << std::endl;
@@ -497,7 +516,7 @@ bool compare(T1 *refData, std::vector< T2 > data,
     for(size_t i = 0; i < length; ++i)
     {
         diff[0] = refData[i][0] - data[i];
-        error += (float)(diff[0] * diff[0]);
+		error += (float)(diff[0] * diff[0]);
         ref[0] += refData[i][0] * refData[i][0];
     }
 	if (error != 0)
