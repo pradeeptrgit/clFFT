@@ -280,6 +280,10 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 	cl_mem outfftbuffer = ::clCreateBuffer( context, CL_MEM_READ_WRITE, out_size_of_buffers, NULL, &status);
     OPENCL_V_THROW( status, "Creating Buffer ( ::clCreateBuffer(oufftbuffer) )" );
 
+	//output magnitude buffer transform. 	
+	cl_mem magoutfftbuffer = ::clCreateBuffer( context, CL_MEM_WRITE_ONLY, out_size_of_buffers/2, NULL, &status);
+    OPENCL_V_THROW( status, "Creating Buffer ( ::clCreateBuffer(oufftbuffer) )" );
+
 	//clFFT initializations
 	
 	//	FFT state
@@ -371,12 +375,12 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 	OPENCL_V_THROW( status, "clCreateKernel extractMagnitude failed" );
 
 	OPENCL_V_THROW( clSetKernelArg( postkernel, 0, sizeof( cl_mem ), (void*)&outfftbuffer ), "clSetKernelArg failed" );
+	OPENCL_V_THROW( clSetKernelArg( postkernel, 1, sizeof( cl_mem ), (void*)&magoutfftbuffer ), "clSetKernelArg failed" );
 
 	//Launch pre-process kernel
-	size_t gSize = fftLength;
-	size_t lSize = 64;
+	size_t gSize_pre = fftLength;
 	status = clEnqueueNDRangeKernel( commandQueue, prekernel, 1,
-											NULL, &gSize, NULL, 0, NULL, NULL );
+							NULL, &gSize_pre, NULL, 0, NULL, NULL );
 	OPENCL_V_THROW( status, "clEnqueueNDRangeKernel failed" );
 	
 	OPENCL_V_THROW( clFinish( commandQueue ), "clFinish failed" );
@@ -386,22 +390,10 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 		&in32bitfftbuffer, &outfftbuffer, clMedBuffer ),
 		"clfftEnqueueTransform failed" );
 	
-	//Launch pre-process kernel
-	if (fftLength % 64 == 0) 
-	{
-		status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
-												NULL, &gSize, &lSize, 0, NULL, NULL );
-	}
-	else if (fftLength % 32 == 0) 
-	{
-		lSize = 32;
-		status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
-												NULL, &gSize, &lSize, 0, NULL, NULL );
-	}
-	else
-		status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
-												NULL, &gSize, NULL, 0, NULL, NULL );
-
+	size_t gSize_post = fftLength/2;
+	//Launch post-process kernel
+	status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
+						NULL, &gSize_post, NULL, 0, NULL, NULL );
 	OPENCL_V_THROW( status, "clEnqueueNDRangeKernel failed" );
 
 	OPENCL_V_THROW( clFinish( commandQueue ), "clFinish failed" );
@@ -423,7 +415,7 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 			OPENCL_V_THROW( clSetKernelArg( prekernel, 1, sizeof( cl_mem ), (void*)&in32bitfftbuffer ), "clSetKernelArg failed" );
 
 			status = clEnqueueNDRangeKernel( commandQueue, prekernel, 1,
-													NULL, &gSize, NULL, 0, NULL, NULL );
+										NULL, &gSize_pre, NULL, 0, NULL, NULL );
 			OPENCL_V_THROW( status, "clEnqueueNDRangeKernel failed" );
 	
 			OPENCL_V_THROW( clFinish( commandQueue ), "clFinish failed" );
@@ -435,23 +427,10 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 
 			//Launch post-process kernel
 			OPENCL_V_THROW( clSetKernelArg( postkernel, 0, sizeof( cl_mem ), (void*)&outfftbuffer ), "clSetKernelArg failed" );
+			OPENCL_V_THROW( clSetKernelArg( postkernel, 1, sizeof( cl_mem ), (void*)&magoutfftbuffer ), "clSetKernelArg failed" );
 
-			lSize = 64;
-			if (fftLength % 64 == 0) 
-			{
-				status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
-														NULL, &gSize, &lSize, 0, NULL, NULL );
-			}
-			else if (fftLength % 32 == 0) 
-			{
-				lSize = 32;
-				status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
-														NULL, &gSize, &lSize, 0, NULL, NULL );
-			}
-			else
-				status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
-														NULL, &gSize, NULL, 0, NULL, NULL );
-
+			status = clEnqueueNDRangeKernel( commandQueue, postkernel, 1,
+								NULL, &gSize_post, NULL, 0, NULL, NULL );
 			OPENCL_V_THROW( status, "clEnqueueNDRangeKernel failed" );
 
 			OPENCL_V_THROW( clFinish( commandQueue ), "clFinish failed" );
@@ -471,9 +450,9 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 
 	if (profile_count == 1)
 	{
-		std::vector< T > output( fftLength );
+		std::vector< T > output( fftLength/2 );
 
-		OPENCL_V_THROW( clEnqueueReadBuffer( commandQueue, outfftbuffer, CL_TRUE, 0, out_size_of_buffers, &output[ 0 ],
+		OPENCL_V_THROW( clEnqueueReadBuffer( commandQueue, magoutfftbuffer, CL_TRUE, 0, out_size_of_buffers/2, &output[ 0 ],
 			0, NULL, NULL ), "Reading the result buffer failed" );
 
 		//Reference fftw output
@@ -500,6 +479,7 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 	OPENCL_V_THROW( clReleaseMemObject( in24bitfftbuffer ), "Error: In clReleaseMemObject\n" );
 	OPENCL_V_THROW( clReleaseMemObject( in32bitfftbuffer ), "Error: In clReleaseMemObject\n" );
 	OPENCL_V_THROW( clReleaseMemObject( outfftbuffer ), "Error: In clReleaseMemObject\n" );
+	OPENCL_V_THROW( clReleaseMemObject( magoutfftbuffer ), "Error: In clReleaseMemObject\n" );
 }
 
 //Compare reference and opencl output 

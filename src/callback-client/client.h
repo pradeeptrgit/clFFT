@@ -58,11 +58,11 @@ typedef unsigned char uint24_t[3];
 								*((__global float*)output + outoffset) = magnitude; \n \
 							} \n
 
-#define MagnitudeExtraction_KERNEL __kernel void extractMagnitude(__global float2 *output) \n \
+#define MagnitudeExtraction_KERNEL __kernel void extractMagnitude(__global float2 *output, __global float *magoutput) \n \
 							{ \n \
 								uint outoffset = get_global_id(0); \n \
 								float magnitude = sqrt(output[outoffset].x * output[outoffset].x + output[outoffset].y * output[outoffset].y); \n \
-								*((__global float*)output + outoffset) = magnitude; \n \
+								*(magoutput + outoffset) = magnitude; \n \
 							} \n
 
 template < typename T >
