@@ -282,7 +282,7 @@ void runR2C_FFT_PreAndPostprocessKernel(std::auto_ptr< clfftSetupData > setupDat
 
 	//output magnitude buffer transform. 	
 	cl_mem magoutfftbuffer = ::clCreateBuffer( context, CL_MEM_WRITE_ONLY, out_size_of_buffers/2, NULL, &status);
-    OPENCL_V_THROW( status, "Creating Buffer ( ::clCreateBuffer(oufftbuffer) )" );
+    OPENCL_V_THROW( status, "Creating Buffer ( ::clCreateBuffer(magoutfftbuffer) )" );
 
 	//clFFT initializations
 	

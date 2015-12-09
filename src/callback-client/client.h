@@ -52,7 +52,7 @@ typedef unsigned char uint24_t[3];
 								*((__global float*)output + inoffset) = val;  \n \
 							} \n
 
-#define MagnitudeExtraction float extractMagnitude(__global void *output, uint outoffset, __global void *userdata, float2 fftoutput) \n \
+#define MagnitudeExtraction void extractMagnitude(__global void *output, uint outoffset, __global void *userdata, float2 fftoutput) \n \
 							{ \n \
 								float magnitude = sqrt(fftoutput.x * fftoutput.x + fftoutput.y * fftoutput.y); \n \
 								*((__global float*)output + outoffset) = magnitude; \n \
