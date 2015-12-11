@@ -1947,9 +1947,7 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 					fftPlan->action = new FFTGeneratedTransposeSquareAction(plHandle, fftPlan, *commQueueFFT, err);
                 else if (fftPlan->gen == Transpose_NONSQUARE)
                 {
-					if(fftPlan->nonSquareKernelType == NON_SQUARE_TRANS_TRANSPOSE)
-						fftPlan->action = new FFTGeneratedTransposeNonSquareAction(plHandle, fftPlan, *commQueueFFT, err);
-					else if (fftPlan->nonSquareKernelType == NON_SQUARE_TRANS_SWAP)
+					if(fftPlan->nonSquareKernelType == NON_SQUARE_TRANS_TRANSPOSE || fftPlan->nonSquareKernelType == NON_SQUARE_TRANS_SWAP)
 						fftPlan->action = new FFTGeneratedTransposeNonSquareAction(plHandle, fftPlan, *commQueueFFT, err);
 					else
 					{
@@ -1989,6 +1987,12 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 							trans1Plan->outStride.push_back(fftPlan->outStride[index]);
 						}
 
+						if (fftPlan->hasPreCallback)
+						{
+							trans1Plan->hasPreCallback = true;
+							trans1Plan->preCallback = fftPlan->preCallback;
+							trans1Plan->precallUserData = fftPlan->precallUserData;
+						}
 
 						OPENCL_V(clfftBakePlan(fftPlan->planTX, numQueues, commQueueFFT, NULL, NULL),
 							_T("BakePlan transpose_nsq_stage1 plan failed"));

@@ -636,11 +636,7 @@ static clfftStatus genSwapKernel(const FFTGeneratedTransposeNonSquareAction::Sig
             }
             clKernWrite(transKernel, 3) << tmpBuffType <<" " << dtInput << " *te = tmp_tot_mem;" << std::endl;
             clKernWrite(transKernel, 3) << tmpBuffType <<" " << dtInput << " *to = (tmp_tot_mem + " << (avail_mem >> 1) << ");" << std::endl;
-            //Do not advance offset when precallback is set as the starting address of global buffer is needed
-            if (!params.fft_hasPreCallback)
-            {
-                clKernWrite(transKernel, 3) << "inputA += iOffset;" << std::endl;  // Set A ptr to the start of each slice
-            }
+            clKernWrite(transKernel, 3) << "inputA += iOffset;" << std::endl;  // Set A ptr to the start of each slice
             break;
         case CLFFT_COMPLEX_PLANAR:
             if (!use_global_memory) {
@@ -648,12 +644,8 @@ static clfftStatus genSwapKernel(const FFTGeneratedTransposeNonSquareAction::Sig
             }
             clKernWrite(transKernel, 3) << tmpBuffType << " " << dtComplex << " *te = tmp_tot_mem;" << std::endl;
             clKernWrite(transKernel, 3) << tmpBuffType << " " << dtComplex << " *to = (tmp_tot_mem + " << (avail_mem >> 1) << ");" << std::endl;
-            //Do not advance offset when precallback is set as the starting address of global buffer is needed
-            if (!params.fft_hasPreCallback)
-            {
-                clKernWrite(transKernel, 3) << "inputA_R += iOffset;" << std::endl;  // Set A ptr to the start of each slice 
-                clKernWrite(transKernel, 3) << "inputA_I += iOffset;" << std::endl;  // Set A ptr to the start of each slice 
-            }
+            clKernWrite(transKernel, 3) << "inputA_R += iOffset;" << std::endl;  // Set A ptr to the start of each slice 
+            clKernWrite(transKernel, 3) << "inputA_I += iOffset;" << std::endl;  // Set A ptr to the start of each slice 
             break;
         case CLFFT_HERMITIAN_INTERLEAVED:
         case CLFFT_HERMITIAN_PLANAR:
