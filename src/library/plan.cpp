@@ -1994,6 +1994,7 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 							trans1Plan->precallUserData = fftPlan->precallUserData;
 						}
 
+						
 						OPENCL_V(clfftBakePlan(fftPlan->planTX, numQueues, commQueueFFT, NULL, NULL),
 							_T("BakePlan transpose_nsq_stage1 plan failed"));
 
@@ -2030,6 +2031,12 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 							trans2Plan->outStride.push_back(fftPlan->outStride[index]);
 						}
 
+						if (fftPlan->hasPostCallback)
+						{
+							trans2Plan->hasPostCallback = true;
+							trans2Plan->postCallbackParam = fftPlan->postCallbackParam;
+							trans2Plan->postcallUserData = fftPlan->postcallUserData;
+						}
 
 						OPENCL_V(clfftBakePlan(fftPlan->planTY, numQueues, commQueueFFT, NULL, NULL),
 							_T("BakePlan transpose_nsq_stage2 plan failed"));

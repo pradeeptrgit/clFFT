@@ -227,6 +227,7 @@ static clfftStatus genTransposePrototype(const FFTGeneratedTransposeNonSquareAct
 
     if (params.fft_hasPreCallback)
     {
+		assert(!params.fft_hasPostCallback);
         if (params.fft_preCallback.localMemSize > 0)
         {
             clKernWrite(transKernel, 0) << ", __global void* userdata, __local void* localmem";
@@ -236,6 +237,19 @@ static clfftStatus genTransposePrototype(const FFTGeneratedTransposeNonSquareAct
             clKernWrite(transKernel, 0) << ", __global void* userdata";
         }
     }
+	if (params.fft_hasPostCallback)
+	{
+		assert(!params.fft_hasPreCallback);
+
+		if (params.fft_postCallback.localMemSize > 0)
+		{
+			clKernWrite( transKernel, 0 ) << ", __global void* post_userdata, __local void* localmem";
+		}
+		else
+		{
+			clKernWrite( transKernel, 0 ) << ", __global void* post_userdata";
+		}
+	}
 
 
     // Close the method signature
@@ -322,6 +336,14 @@ static clfftStatus genSwapKernel(const FFTGeneratedTransposeNonSquareAction::Sig
         return CLFFT_TRANSPOSED_NOTIMPLEMENTED;
         break;
     }
+
+	//If post-callback is set for the plan
+	if (params.fft_hasPostCallback)
+	{
+		//Insert callback function code at the beginning 
+		clKernWrite( transKernel, 0 ) << params.fft_postCallback.funcstring << std::endl;
+		clKernWrite( transKernel, 0 ) << std::endl;
+	}
 
     // This detects whether the input matrix is rectangle of ratio 1:2
 
@@ -442,20 +464,31 @@ static clfftStatus genSwapKernel(const FFTGeneratedTransposeNonSquareAction::Sig
         switch (params.fft_inputLayout)
         {
         case CLFFT_COMPLEX_INTERLEAVED:
-            clKernWrite(transKernel, 0) << "void swap(global " << dtComplex << "* inputA, " << tmpBuffType << " " << dtComplex << "* Ls, "<< tmpBuffType << " " << dtComplex << " * Ld, int is, int id, int pos, int end_indx, int work_id){" << std::endl;
+            clKernWrite(transKernel, 0) << "void swap(global " << dtComplex << "* inputA, " << tmpBuffType << " " << dtComplex << "* Ls, "<< tmpBuffType << " " << dtComplex << " * Ld, int is, int id, int pos, int end_indx, int work_id";
             break;
         case CLFFT_COMPLEX_PLANAR:
-            clKernWrite(transKernel, 0) << "void swap(global " << dtPlanar << "* inputA_R, global " << dtPlanar << "* inputA_I, " << tmpBuffType << " " <<dtComplex << "* Ls, "<< tmpBuffType << " " << dtComplex << "* Ld, int is, int id, int pos, int end_indx, int work_id){" << std::endl;
+            clKernWrite(transKernel, 0) << "void swap(global " << dtPlanar << "* inputA_R, global " << dtPlanar << "* inputA_I, " << tmpBuffType << " " <<dtComplex << "* Ls, "<< tmpBuffType << " " << dtComplex << "* Ld, int is, int id, int pos, int end_indx, int work_id";
             break;
         case CLFFT_HERMITIAN_INTERLEAVED:
         case CLFFT_HERMITIAN_PLANAR:
             return CLFFT_TRANSPOSED_NOTIMPLEMENTED;
         case CLFFT_REAL:
-            clKernWrite(transKernel, 0) << "void swap(global " << dtPlanar << "* inputA, " << tmpBuffType <<" " << dtPlanar << "* Ls, "<< tmpBuffType <<" " << dtPlanar << "* Ld, int is, int id, int pos, int end_indx, int work_id){" << std::endl;
+            clKernWrite(transKernel, 0) << "void swap(global " << dtPlanar << "* inputA, " << tmpBuffType <<" " << dtPlanar << "* Ls, "<< tmpBuffType <<" " << dtPlanar << "* Ld, int is, int id, int pos, int end_indx, int work_id";
             break;
         default:
             return CLFFT_TRANSPOSED_NOTIMPLEMENTED;
         }
+
+		if (params.fft_hasPostCallback)
+		{
+			clKernWrite(transKernel, 0) << ", size_t iOffset, __global void* post_userdata";
+			if (params.fft_postCallback.localMemSize > 0)
+			{
+				clKernWrite(transKernel, 0) << ", __local void* localmem";
+			}
+		}
+
+		clKernWrite(transKernel, 0) << "){" << std::endl;
 
         clKernWrite(transKernel, 3) << "for (int j = get_local_id(0); j < end_indx; j += " << local_work_size_swap << "){" << std::endl;
 
@@ -464,45 +497,61 @@ static clfftStatus genSwapKernel(const FFTGeneratedTransposeNonSquareAction::Sig
         case CLFFT_REAL:
         case CLFFT_COMPLEX_INTERLEAVED:
 
-            clKernWrite(transKernel, 6) << "if (pos == 0){" << std::endl;
-            clKernWrite(transKernel, 9) << "Ls[j] = inputA[is *" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
-            clKernWrite(transKernel, 9) << "Ld[j] = inputA[id *" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
-            clKernWrite(transKernel, 9) << "inputA[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j] = Ls[j];" << std::endl;
-            clKernWrite(transKernel, 6) << "}" << std::endl;
+			
+			clKernWrite(transKernel, 6) << "if (pos == 0){" << std::endl;
+			clKernWrite(transKernel, 9) << "Ls[j] = inputA[is *" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;				
+			clKernWrite(transKernel, 9) << "Ld[j] = inputA[id *" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
+			clKernWrite(transKernel, 6) << "}" << std::endl;
 
-            clKernWrite(transKernel, 6) << "else if (pos == 1){" << std::endl;
-            clKernWrite(transKernel, 9) << "Ld[j] = inputA[id *" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
-            clKernWrite(transKernel, 9) << "inputA[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j] = Ls[j];" << std::endl;
-            clKernWrite(transKernel, 6) << "}" << std::endl;
+			clKernWrite(transKernel, 6) << "else if (pos == 1){" << std::endl;
+			clKernWrite(transKernel, 9) << "Ld[j] = inputA[id *" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
+			clKernWrite(transKernel, 6) << "}" << std::endl;
 
-            clKernWrite(transKernel, 6) << "else{" << std::endl;
-            clKernWrite(transKernel, 9) << "inputA[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j] = Ls[j];" << std::endl;
-            clKernWrite(transKernel, 6) << "}" << std::endl;
+			if (params.fft_hasPostCallback)
+			{	
+				clKernWrite(transKernel, 6) << params.fft_postCallback.funcname << "(inputA, (iOffset + id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j), post_userdata, Ls[j]";
+				if (params.fft_postCallback.localMemSize > 0)
+				{
+					clKernWrite( transKernel, 0 ) << ", localmem";
+				}
+				clKernWrite( transKernel, 0 ) << ");" << std::endl;
+			}
+			else
+			{
+				clKernWrite(transKernel, 6) << "inputA[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j] = Ls[j];" << std::endl;
+			}
             break;
         case CLFFT_HERMITIAN_INTERLEAVED:
         case CLFFT_HERMITIAN_PLANAR:
             return CLFFT_TRANSPOSED_NOTIMPLEMENTED;
         case CLFFT_COMPLEX_PLANAR:
-            clKernWrite(transKernel, 6) << "if (pos == 0){" << std::endl;
-            clKernWrite(transKernel, 9) << "Ls[j].x = inputA_R[is*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
-            clKernWrite(transKernel, 9) << "Ls[j].y = inputA_I[is*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
-            clKernWrite(transKernel, 9) << "Ld[j].x = inputA_R[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
-            clKernWrite(transKernel, 9) << "Ld[j].y = inputA_I[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
-            clKernWrite(transKernel, 9) << "inputA_R[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j] = Ls[j].x;" << std::endl;
-            clKernWrite(transKernel, 9) << "inputA_I[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j] = Ls[j].y;" << std::endl;
-            clKernWrite(transKernel, 6) << "}" << std::endl;
+			
+			clKernWrite(transKernel, 6) << "if (pos == 0){" << std::endl;
+			clKernWrite(transKernel, 9) << "Ls[j].x = inputA_R[is*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
+			clKernWrite(transKernel, 9) << "Ls[j].y = inputA_I[is*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
+			clKernWrite(transKernel, 9) << "Ld[j].x = inputA_R[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
+			clKernWrite(transKernel, 9) << "Ld[j].y = inputA_I[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
+			clKernWrite(transKernel, 6) << "}" << std::endl;
 
-            clKernWrite(transKernel, 6) << "else if (pos == 1){" << std::endl;
-            clKernWrite(transKernel, 9) << "Ld[j].x = inputA_R[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
-            clKernWrite(transKernel, 9) << "Ld[j].y = inputA_I[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
-            clKernWrite(transKernel, 9) << "inputA_R[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j] = Ls[j].x;" << std::endl;
-            clKernWrite(transKernel, 9) << "inputA_I[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j] = Ls[j].y;" << std::endl;
-            clKernWrite(transKernel, 6) << "}" << std::endl;
-
-            clKernWrite(transKernel, 6) << "else{" << std::endl;
-            clKernWrite(transKernel, 9) << "inputA_R[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j] = Ls[j].x;" << std::endl;
-            clKernWrite(transKernel, 9) << "inputA_I[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j] = Ls[j].y;" << std::endl;
-            clKernWrite(transKernel, 6) << "}" << std::endl;
+			clKernWrite(transKernel, 6) << "else if (pos == 1){" << std::endl;
+			clKernWrite(transKernel, 9) << "Ld[j].x = inputA_R[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
+			clKernWrite(transKernel, 9) << "Ld[j].y = inputA_I[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j];" << std::endl;
+			clKernWrite(transKernel, 6) << "}" << std::endl;
+			
+			if (params.fft_hasPostCallback)
+			{
+				clKernWrite(transKernel, 6) << params.fft_postCallback.funcname << "(inputA_R, inputA_I, (iOffset + id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j), post_userdata, Ls[j].x, Ls[j].y";
+				if (params.fft_postCallback.localMemSize > 0)
+				{
+					clKernWrite( transKernel, 0 ) << ", localmem";
+				}
+				clKernWrite( transKernel, 0 ) << ");" << std::endl;
+			}
+			else
+			{
+				clKernWrite(transKernel, 6) << "inputA_R[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j] = Ls[j].x;" << std::endl;
+				clKernWrite(transKernel, 6) << "inputA_I[id*" << smaller_dim << " + " << num_elements_loaded << " * work_id + j] = Ls[j].y;" << std::endl;
+			}
             break;
         default:
             return CLFFT_TRANSPOSED_NOTIMPLEMENTED;
@@ -540,7 +589,10 @@ static clfftStatus genSwapKernel(const FFTGeneratedTransposeNonSquareAction::Sig
             clKernWrite(transKernel, 3) << tmpBuffType <<" " << dtInput << " *te = tmp_tot_mem;" << std::endl;
 
 			clKernWrite(transKernel, 3) << tmpBuffType <<" " << dtInput << " *to = (tmp_tot_mem + " << num_elements_loaded << ");" << std::endl;
-            clKernWrite(transKernel, 3) << "inputA += iOffset;" << std::endl;  // Set A ptr to the start of each slice
+			 
+			//Do not advance offset when postcallback is set as the starting address of global buffer is needed
+            if (!params.fft_hasPostCallback)
+				clKernWrite(transKernel, 3) << "inputA += iOffset;" << std::endl;  // Set A ptr to the start of each slice
             break;
         case CLFFT_COMPLEX_PLANAR:
            
@@ -548,8 +600,13 @@ static clfftStatus genSwapKernel(const FFTGeneratedTransposeNonSquareAction::Sig
             clKernWrite(transKernel, 3) << tmpBuffType << " " << dtComplex << " *te = tmp_tot_mem;" << std::endl;
 
 			clKernWrite(transKernel, 3) << tmpBuffType << " " << dtComplex << " *to = (tmp_tot_mem + " << num_elements_loaded << ");" << std::endl;
-            clKernWrite(transKernel, 3) << "inputA_R += iOffset;" << std::endl;  // Set A ptr to the start of each slice 
-            clKernWrite(transKernel, 3) << "inputA_I += iOffset;" << std::endl;  // Set A ptr to the start of each slice 
+
+			//Do not advance offset when postcallback is set as the starting address of global buffer is needed
+            if (!params.fft_hasPostCallback)
+			{
+				clKernWrite(transKernel, 3) << "inputA_R += iOffset;" << std::endl;  // Set A ptr to the start of each slice 
+				clKernWrite(transKernel, 3) << "inputA_I += iOffset;" << std::endl;  // Set A ptr to the start of each slice 
+			}
             break;
         case CLFFT_HERMITIAN_INTERLEAVED:
         case CLFFT_HERMITIAN_PLANAR:
@@ -590,12 +647,21 @@ static clfftStatus genSwapKernel(const FFTGeneratedTransposeNonSquareAction::Sig
         {
         case CLFFT_COMPLEX_INTERLEAVED:
         case CLFFT_REAL:
-            clKernWrite(transKernel, 6) << "swap(inputA, tmp_swap_ptr[swap_inx], tmp_swap_ptr[1 - swap_inx], swap_table[loop][0], swap_table[loop][1], swap_table[loop][2], end_indx, work_id);" << std::endl;
+            clKernWrite(transKernel, 6) << "swap(inputA, tmp_swap_ptr[swap_inx], tmp_swap_ptr[1 - swap_inx], swap_table[loop][0], swap_table[loop][1], swap_table[loop][2], end_indx, work_id";
             break;
         case CLFFT_COMPLEX_PLANAR:
-            clKernWrite(transKernel, 6) << "swap(inputA_R, inputA_I, tmp_swap_ptr[swap_inx], tmp_swap_ptr[1 - swap_inx], swap_table[loop][0], swap_table[loop][1], swap_table[loop][2], end_indx, work_id);" << std::endl;
+            clKernWrite(transKernel, 6) << "swap(inputA_R, inputA_I, tmp_swap_ptr[swap_inx], tmp_swap_ptr[1 - swap_inx], swap_table[loop][0], swap_table[loop][1], swap_table[loop][2], end_indx, work_id";
             break;
         }
+		if (params.fft_hasPostCallback)
+		{
+			clKernWrite(transKernel, 0) << ", iOffset, post_userdata";
+			if (params.fft_postCallback.localMemSize > 0)
+			{
+				clKernWrite(transKernel, 0) << ", localmem";
+			}
+		}
+		clKernWrite(transKernel, 0) << ");" << std::endl;
 
         clKernWrite(transKernel, 3) << "}" << std::endl;
 
@@ -1292,6 +1358,11 @@ clfftStatus FFTGeneratedTransposeNonSquareAction::initParams()
         this->signature.fft_hasPreCallback = true;
         this->signature.fft_preCallback = this->plan->preCallback;
     }
+	if (this->plan->hasPostCallback)
+	{
+		this->signature.fft_hasPostCallback = true;
+		this->signature.fft_postCallback = this->plan->postCallbackParam;
+	}
 
     return CLFFT_SUCCESS;
 }
