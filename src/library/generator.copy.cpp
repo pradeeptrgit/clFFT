@@ -574,6 +574,7 @@ clfftStatus FFTGeneratedCopyAction::initParams ()
 			return CLFFT_INVALID_ARG_VALUE;
 		}
 	}
+	this->signature.limit_LocalMemSize = this->plan->envelope.limit_LocalMemSize;
 
     return CLFFT_SUCCESS;
 }

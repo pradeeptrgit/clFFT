@@ -230,11 +230,11 @@ static clfftStatus genTransposePrototype(const FFTGeneratedTransposeNonSquareAct
 		assert(!params.fft_hasPostCallback);
         if (params.fft_preCallback.localMemSize > 0)
         {
-            clKernWrite(transKernel, 0) << ", __global void* userdata, __local void* localmem";
+            clKernWrite(transKernel, 0) << ", __global void* pre_userdata, __local void* localmem";
         }
         else
         {
-            clKernWrite(transKernel, 0) << ", __global void* userdata";
+            clKernWrite(transKernel, 0) << ", __global void* pre_userdata";
         }
     }
 	if (params.fft_hasPostCallback)
@@ -337,14 +337,6 @@ static clfftStatus genSwapKernel(const FFTGeneratedTransposeNonSquareAction::Sig
         break;
     }
 
-	//If post-callback is set for the plan
-	if (params.fft_hasPostCallback)
-	{
-		//Insert callback function code at the beginning 
-		clKernWrite( transKernel, 0 ) << params.fft_postCallback.funcstring << std::endl;
-		clKernWrite( transKernel, 0 ) << std::endl;
-	}
-
     // This detects whether the input matrix is rectangle of ratio 1:2
 
     if ((params.fft_N[0] != 2 * params.fft_N[1]) && (params.fft_N[1] != 2 * params.fft_N[0]))
@@ -403,6 +395,28 @@ static clfftStatus genSwapKernel(const FFTGeneratedTransposeNonSquareAction::Sig
         local_work_size_swap = (num_elements_loaded < 256) ? num_elements_loaded : 256;
     }
     
+	//If post-callback is set for the plan
+	if (params.fft_hasPostCallback)
+	{
+		//Requested local memory size by callback must not exceed the device LDS limits after factoring the LDS size required by swap kernel
+		if (params.fft_postCallback.localMemSize > 0)
+		{
+			bool validLDSSize = false;
+			
+			validLDSSize = ((2 * input_elm_size_in_bytes * (num_elements_loaded * 2)) + params.fft_postCallback.localMemSize) < params.limit_LocalMemSize;
+		
+			if(!validLDSSize)
+			{
+				fprintf(stderr, "Requested local memory size not available\n");
+				return CLFFT_INVALID_ARG_VALUE;
+			}
+		}
+
+		//Insert callback function code at the beginning 
+		clKernWrite( transKernel, 0 ) << params.fft_postCallback.funcstring << std::endl;
+		clKernWrite( transKernel, 0 ) << std::endl;
+	}
+
     /*Generating the  swapping logic*/
     {
         size_t num_reduced_row;
@@ -960,13 +974,13 @@ static clfftStatus genTransposeKernel(const FFTGeneratedTransposeNonSquareAction
                 {
                     if (params.fft_preCallback.localMemSize > 0)
                     {
-                        clKernWrite(transKernel, 6) << "tmpm = " << params.fft_preCallback.funcname << "(inputA, iOffset + (idy + loop * " << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, userdata, localmem);" << std::endl;
-                        clKernWrite(transKernel, 6) << "tmpt = " << params.fft_preCallback.funcname << "(inputA, iOffset + (lidy + loop * " << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, userdata, localmem);" << std::endl;
+                        clKernWrite(transKernel, 6) << "tmpm = " << params.fft_preCallback.funcname << "(inputA, iOffset + (idy + loop * " << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, pre_userdata, localmem);" << std::endl;
+                        clKernWrite(transKernel, 6) << "tmpt = " << params.fft_preCallback.funcname << "(inputA, iOffset + (lidy + loop * " << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, pre_userdata, localmem);" << std::endl;
                     }
                     else
                     {
-                        clKernWrite(transKernel, 6) << "tmpm = " << params.fft_preCallback.funcname << "(inputA, iOffset + (idy + loop * " << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, userdata);" << std::endl;
-                        clKernWrite(transKernel, 6) << "tmpt = " << params.fft_preCallback.funcname << "(inputA, iOffset + (lidy + loop * " << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, userdata);" << std::endl;
+                        clKernWrite(transKernel, 6) << "tmpm = " << params.fft_preCallback.funcname << "(inputA, iOffset + (idy + loop * " << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, pre_userdata);" << std::endl;
+                        clKernWrite(transKernel, 6) << "tmpt = " << params.fft_preCallback.funcname << "(inputA, iOffset + (lidy + loop * " << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, pre_userdata);" << std::endl;
                     }
                 }
                 else
@@ -983,13 +997,13 @@ static clfftStatus genTransposeKernel(const FFTGeneratedTransposeNonSquareAction
                 {
                     if (params.fft_preCallback.localMemSize > 0)
                     {
-                        clKernWrite(transKernel, 6) << "tmpm = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (idy + loop *" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, userdata, localmem);" << std::endl;
-                        clKernWrite(transKernel, 6) << "tmpt = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (lidy + loop *" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, userdata, localmem);" << std::endl;
+                        clKernWrite(transKernel, 6) << "tmpm = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (idy + loop *" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, pre_userdata, localmem);" << std::endl;
+                        clKernWrite(transKernel, 6) << "tmpt = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (lidy + loop *" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, pre_userdata, localmem);" << std::endl;
                     }
                     else
                     {
-                        clKernWrite(transKernel, 6) << "tmpm = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (idy + loop *" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, userdata);" << std::endl;
-                        clKernWrite(transKernel, 6) << "tmpt = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (lidy + loop *" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, userdata);" << std::endl;
+                        clKernWrite(transKernel, 6) << "tmpm = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (idy + loop *" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, pre_userdata);" << std::endl;
+                        clKernWrite(transKernel, 6) << "tmpt = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (lidy + loop *" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, pre_userdata);" << std::endl;
                     }
                 }
                 else
@@ -1074,13 +1088,13 @@ static clfftStatus genTransposeKernel(const FFTGeneratedTransposeNonSquareAction
                 {
                     if (params.fft_preCallback.localMemSize > 0)
                     {
-                        clKernWrite(transKernel, 9) << "tmpm = " << params.fft_preCallback.funcname << "(inputA, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, userdata, localmem);" << std::endl;
-                        clKernWrite(transKernel, 9) << "tmpt = " << params.fft_preCallback.funcname << "(inputA, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, userdata, localmem);" << std::endl;
+                        clKernWrite(transKernel, 9) << "tmpm = " << params.fft_preCallback.funcname << "(inputA, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, pre_userdata, localmem);" << std::endl;
+                        clKernWrite(transKernel, 9) << "tmpt = " << params.fft_preCallback.funcname << "(inputA, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, pre_userdata, localmem);" << std::endl;
                     }
                     else
                     {
-                        clKernWrite(transKernel, 9) << "tmpm = " << params.fft_preCallback.funcname << "(inputA, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, userdata);" << std::endl;
-                        clKernWrite(transKernel, 9) << "tmpt = " << params.fft_preCallback.funcname << "(inputA, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, userdata);" << std::endl;
+                        clKernWrite(transKernel, 9) << "tmpm = " << params.fft_preCallback.funcname << "(inputA, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, pre_userdata);" << std::endl;
+                        clKernWrite(transKernel, 9) << "tmpt = " << params.fft_preCallback.funcname << "(inputA, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, pre_userdata);" << std::endl;
                     }
                 }
                 else
@@ -1096,13 +1110,13 @@ static clfftStatus genTransposeKernel(const FFTGeneratedTransposeNonSquareAction
                 {
                     if (params.fft_preCallback.localMemSize > 0)
                     {
-                        clKernWrite(transKernel, 9) << "tmpm = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, userdata, localmem);" << std::endl;
-                        clKernWrite(transKernel, 9) << "tmpt = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, userdata, localmem);" << std::endl;
+                        clKernWrite(transKernel, 9) << "tmpm = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, pre_userdata, localmem);" << std::endl;
+                        clKernWrite(transKernel, 9) << "tmpt = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, pre_userdata, localmem);" << std::endl;
                     }
                     else
                     {
-                        clKernWrite(transKernel, 9) << "tmpm = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, userdata);" << std::endl;
-                        clKernWrite(transKernel, 9) << "tmpt = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, userdata);" << std::endl;
+                        clKernWrite(transKernel, 9) << "tmpm = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, pre_userdata);" << std::endl;
+                        clKernWrite(transKernel, 9) << "tmpt = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, pre_userdata);" << std::endl;
                     }
                 }
                 else
@@ -1145,15 +1159,15 @@ static clfftStatus genTransposeKernel(const FFTGeneratedTransposeNonSquareAction
                 {
                     if (params.fft_preCallback.localMemSize > 0)
                     {
-                        clKernWrite(transKernel, 12) << "tmpm = " << params.fft_preCallback.funcname << "(inputA, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, userdata, localmem);" << std::endl;
+                        clKernWrite(transKernel, 12) << "tmpm = " << params.fft_preCallback.funcname << "(inputA, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, pre_userdata, localmem);" << std::endl;
                         clKernWrite(transKernel, 9) << "if ((t_gy_p *" << 16 * reShapeFactor << " + lidx)<" << smaller_dim << " && (t_gx_p * " << 16 * reShapeFactor << " + lidy + loop*" << 16 / reShapeFactor << ")<" << smaller_dim << ") " << std::endl;
-                        clKernWrite(transKernel, 12) << "tmpt = " << params.fft_preCallback.funcname << "(inputA, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, userdata, localmem);" << std::endl;
+                        clKernWrite(transKernel, 12) << "tmpt = " << params.fft_preCallback.funcname << "(inputA, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, pre_userdata, localmem);" << std::endl;
                     }
                     else
                     {
-                        clKernWrite(transKernel, 12) << "tmpm = " << params.fft_preCallback.funcname << "(inputA, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, userdata);" << std::endl;
+                        clKernWrite(transKernel, 12) << "tmpm = " << params.fft_preCallback.funcname << "(inputA, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, pre_userdata);" << std::endl;
                         clKernWrite(transKernel, 9) << "if ((t_gy_p *" << 16 * reShapeFactor << " + lidx)<" << smaller_dim << " && (t_gx_p * " << 16 * reShapeFactor << " + lidy + loop*" << 16 / reShapeFactor << ")<" << smaller_dim << ") " << std::endl;
-                        clKernWrite(transKernel, 12) << "tmpt = " << params.fft_preCallback.funcname << "(inputA, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, userdata);" << std::endl;
+                        clKernWrite(transKernel, 12) << "tmpt = " << params.fft_preCallback.funcname << "(inputA, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, pre_userdata);" << std::endl;
                     }
                 }
                 else
@@ -1171,15 +1185,15 @@ static clfftStatus genTransposeKernel(const FFTGeneratedTransposeNonSquareAction
                 {
                     if (params.fft_preCallback.localMemSize > 0)
                     {
-                        clKernWrite(transKernel, 12) << "tmpm = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, userdata, localmem); }" << std::endl;
+                        clKernWrite(transKernel, 12) << "tmpm = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, pre_userdata, localmem); }" << std::endl;
                         clKernWrite(transKernel, 9) << "if ((t_gy_p *" << 16 * reShapeFactor << " + lidx)<" << smaller_dim << " && (t_gx_p * " << 16 * reShapeFactor << " + lidy + loop*" << 16 / reShapeFactor << ")<" << smaller_dim << ") {" << std::endl;
-                        clKernWrite(transKernel, 12) << "tmpt = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, userdata, localmem); }" << std::endl;
+                        clKernWrite(transKernel, 12) << "tmpt = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, pre_userdata, localmem); }" << std::endl;
                     }
                     else
                     {
-                        clKernWrite(transKernel, 12) << "tmpm = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, userdata); }" << std::endl;
+                        clKernWrite(transKernel, 12) << "tmpm = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (idy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + idx, pre_userdata); }" << std::endl;
                         clKernWrite(transKernel, 9) << "if ((t_gy_p *" << 16 * reShapeFactor << " + lidx)<" << smaller_dim << " && (t_gx_p * " << 16 * reShapeFactor << " + lidy + loop*" << 16 / reShapeFactor << ")<" << smaller_dim << ") {" << std::endl;
-                        clKernWrite(transKernel, 12) << "tmpt = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, userdata); }" << std::endl;
+                        clKernWrite(transKernel, 12) << "tmpt = " << params.fft_preCallback.funcname << "(inputA_R, inputA_I, iOffset + (lidy + loop*" << 16 / reShapeFactor << ")*" << params.fft_N[0] << " + lidx + starting_index_yx, pre_userdata); }" << std::endl;
                     }
                 }
                 else
@@ -1376,6 +1390,7 @@ clfftStatus FFTGeneratedTransposeNonSquareAction::initParams()
 		this->signature.fft_hasPostCallback = true;
 		this->signature.fft_postCallback = this->plan->postCallbackParam;
 	}
+	this->signature.limit_LocalMemSize = this->plan->envelope.limit_LocalMemSize;
 
     return CLFFT_SUCCESS;
 }
@@ -1394,11 +1409,32 @@ clfftStatus FFTGeneratedTransposeNonSquareAction::generateKernel(FFTRepo& fftRep
     std::string programCode;
     if (this->signature.nonSquareKernelType == NON_SQUARE_TRANS_TRANSPOSE)
     {
-        OPENCL_V(genTransposeKernel(this->signature, programCode, lwSize, reShapeFactor), _T("GenerateTransposeKernel() failed!"));
+		//Requested local memory size by callback must not exceed the device LDS limits after factoring the LDS size required by transpose kernel
+		if (this->signature.fft_hasPreCallback && this->signature.fft_preCallback.localMemSize > 0)
+		{
+			assert(!this->signature.fft_hasPostCallback);
+
+			bool validLDSSize = false;
+			size_t requestedCallbackLDS = 0;
+
+			requestedCallbackLDS = this->signature.fft_preCallback.localMemSize;
+			
+			validLDSSize = ((2 * this->plan->ElementSize() * 16 * reShapeFactor * 16 * reShapeFactor) + requestedCallbackLDS) < this->plan->envelope.limit_LocalMemSize;
+		
+			if(!validLDSSize)
+			{
+				fprintf(stderr, "Requested local memory size not available\n");
+				return CLFFT_INVALID_ARG_VALUE;
+			}
+		}
+        OPENCL_V(genTransposeKernel(this->signature, programCode, lwSize, reShapeFactor), _T("genTransposeKernel() failed!"));
     }
     else
     {
-        OPENCL_V(genSwapKernel(this->signature, programCode, lwSize, reShapeFactor), _T("GenerateTransposeKernel() failed!"));
+		//No pre-callback possible in swap kernel
+		assert(!this->signature.fft_hasPreCallback);
+
+        OPENCL_V(genSwapKernel(this->signature, programCode, lwSize, reShapeFactor), _T("genSwapKernel() failed!"));
     }
 
     cl_int status = CL_SUCCESS;

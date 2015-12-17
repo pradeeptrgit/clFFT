@@ -1096,6 +1096,7 @@ clfftStatus FFTGeneratedTransposeGCNAction::initParams ()
 		this->signature.fft_hasPostCallback = true;
 		this->signature.fft_postCallback = this->plan->postCallbackParam;
 	}
+	this->signature.limit_LocalMemSize = this->plan->envelope.limit_LocalMemSize;
 
     return CLFFT_SUCCESS;
 }

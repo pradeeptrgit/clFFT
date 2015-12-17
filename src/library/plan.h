@@ -161,6 +161,8 @@ struct FFTKernelGenKeyParams {
 	bool fft_hasPostCallback;
 	clfftCallbackParam fft_postCallback;
 
+	cl_ulong   limit_LocalMemSize;
+
 	// Default constructor
 	FFTKernelGenKeyParams()
 	{
@@ -198,6 +200,7 @@ struct FFTKernelGenKeyParams {
         nonSquareKernelType = NON_SQUARE_TRANS_PARENT;
 		fft_hasPreCallback = false;
 		fft_hasPostCallback = false;
+		limit_LocalMemSize = 0;
 	}
 };
 

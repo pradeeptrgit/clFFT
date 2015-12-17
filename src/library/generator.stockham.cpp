@@ -4517,6 +4517,7 @@ clfftStatus FFTGeneratedStockhamAction::initParams ()
 		this->signature.fft_hasPostCallback = true;
 		this->signature.fft_postCallback = this->plan->postCallbackParam;
 	}
+	this->signature.limit_LocalMemSize = this->plan->envelope.limit_LocalMemSize;
 
     if (this->plan->large1D != 0) {
         ARG_CHECK (this->signature.fft_N[0] != 0)

@@ -504,7 +504,7 @@ clfftStatus	clfftBakePlan( clfftPlanHandle plHandle, cl_uint numQueues, cl_comma
 					// Enable block compute under these conditions
 					if( (fftPlan->inStride[0] == 1) && (fftPlan->outStride[0] == 1) && !rc
 						&& (fftPlan->length[0] <= 262144/PrecisionWidth(fftPlan->precision)) && (fftPlan->length.size() <= 1)
-						&& (!clfftGetRequestLibNoMemAlloc()) )
+						&& (!clfftGetRequestLibNoMemAlloc() || (fftPlan->placeness == CLFFT_OUTOFPLACE)) )
 					{
 						fftPlan->blockCompute = true;
 
